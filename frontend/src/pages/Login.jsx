@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { Phone, Lock, LogIn } from 'lucide-react';
-import BACKEND_URL from '../config';
+import BACKEND_URL from '../config.js';
 import '../pages/Signup.css'; // Reusing signup styles
 
 const Login = ({ onAuth }) => {

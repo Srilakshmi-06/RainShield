@@ -9,7 +9,7 @@ import AdminDash from './pages/AdminDash';
 import { AnimatePresence, motion } from 'framer-motion';
 import { io } from 'socket.io-client';
 import { Bell, X } from 'lucide-react';
-import BACKEND_URL from './config';
+import BACKEND_URL from './config.js';
 
 const socket = io(BACKEND_URL);
 

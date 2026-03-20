@@ -5,7 +5,7 @@ import { io } from 'socket.io-client';
 import './Dashboard.css';
 
 import RiskHeatmap from '../components/RiskHeatmap';
-import BACKEND_URL from '../config';
+import BACKEND_URL from '../config.js';
 
 const socket = io(BACKEND_URL);
 

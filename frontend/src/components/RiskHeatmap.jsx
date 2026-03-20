@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Info, CloudRain, Thermometer, Wind } from 'lucide-react';
 import axios from 'axios';
-import BACKEND_URL from '../config';
+import BACKEND_URL from '../config.js';
 import { MapContainer, TileLayer, CircleMarker, Tooltip, ZoomControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 

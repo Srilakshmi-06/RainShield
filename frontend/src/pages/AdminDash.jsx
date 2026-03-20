@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { Users, AlertTriangle, CheckSquare, Activity, ShieldCheck } from 'lucide-react';
 import { io } from 'socket.io-client';
 import './Dashboard.css'; // Reusing dashboard styles
-import BACKEND_URL from '../config';
+import BACKEND_URL from '../config.js';
 
 const socket = io(BACKEND_URL);
 

@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { ShieldCheck, MapPin, Bike, IndianRupee, Loader2 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import BACKEND_URL from '../config';
+import BACKEND_URL from '../config.js';
 import './Signup.css';
 
 const Signup = ({ onAuth }) => {
