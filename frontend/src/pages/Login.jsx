@@ -17,18 +17,18 @@ const Login = ({ onAuth }) => {
     setError('');
 
     try {
-        const res = await axios.post('http://localhost:5000/api/auth/login', { phone, password });
-        onAuth(res.data.user);
-        navigate(res.data.user.role === 'admin' ? '/admin' : '/dashboard');
+      const res = await axios.post('http://localhost:5000/api/auth/login', { phone, password });
+      onAuth(res.data.user);
+      navigate(res.data.user.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {
-        setError(err.response?.data?.error || 'Login failed');
+      setError(err.response?.data?.error || 'Login failed');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
@@ -45,23 +45,23 @@ const Login = ({ onAuth }) => {
 
         <form onSubmit={handleLogin} className="mt-6">
           <div className="mb-4">
-            <input 
-                type="tel" 
-                className="input-field" 
-                placeholder="Mobile Number (+91)" 
-                required 
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+            <input
+              type="tel"
+              className="input-field"
+              placeholder="Mobile Number (+91)"
+              required
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
             />
           </div>
           <div className="mb-6">
-            <input 
-                type="password" 
-                className="input-field" 
-                placeholder="Password or OTP" 
-                required 
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+            <input
+              type="password"
+              className="input-field"
+              placeholder="Password or OTP"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
           </div>
           <button type="submit" className="btn btn-primary w-full" disabled={loading} style={{ padding: '0.875rem' }}>
@@ -70,7 +70,7 @@ const Login = ({ onAuth }) => {
         </form>
 
         <p className="mt-4" style={{ textAlign: 'center', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-            Demo Admin: 999 / admin
+          Demo Admin: 999 / admin
         </p>
 
         <p className="mt-6" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>

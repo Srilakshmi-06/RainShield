@@ -48,11 +48,11 @@ function App() {
   return (
     <BrowserRouter>
       <Navbar user={user} onLogout={handleLogout} />
-      
+
       {/* Global Real-time Notification Toast */}
       <AnimatePresence>
         {notification && (
-          <motion.div 
+          <motion.div
             initial={{ y: -100, x: '-50%', opacity: 0 }}
             animate={{ y: 0, x: '-50%', opacity: 1 }}
             exit={{ y: -100, x: '-50%', opacity: 0 }}
@@ -75,9 +75,9 @@ function App() {
             }}
           >
             <div className="toast-content flex-start" style={{ gap: '1rem' }}>
-              <div className="icon-wrapper" style={{ 
-                background: 'linear-gradient(135deg, #ef4444, #b91c1c)', 
-                padding: '10px', 
+              <div className="icon-wrapper" style={{
+                background: 'linear-gradient(135deg, #ef4444, #b91c1c)',
+                padding: '10px',
                 borderRadius: '14px',
                 boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
               }}>
@@ -87,16 +87,16 @@ function App() {
                 <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, letterSpacing: '-0.01em' }}>{notification.title}</h4>
                 <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', lineWeight: 1.4 }}>{notification.message}</p>
               </div>
-              <button 
+              <button
                 onClick={() => setNotification(null)}
                 style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', padding: '4px' }}
               >
                 <X size={18} />
               </button>
             </div>
-            
+
             {/* Real-time Progress Bar */}
-            <motion.div 
+            <motion.div
               initial={{ width: '100%' }}
               animate={{ width: '0%' }}
               transition={{ duration: 6, ease: 'linear' }}
@@ -119,21 +119,21 @@ function App() {
             <Route path="/" element={<Landing />} />
             <Route path="/signup" element={<Signup onAuth={handleLogin} />} />
             <Route path="/login" element={<Login onAuth={handleLogin} />} />
-            <Route 
-              path="/dashboard" 
+            <Route
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <Dashboard user={user} />
                 </ProtectedRoute>
-              } 
+              }
             />
-            <Route 
-              path="/admin" 
+            <Route
+              path="/admin"
               element={
                 <ProtectedRoute role="admin">
                   <AdminDash />
                 </ProtectedRoute>
-              } 
+              }
             />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

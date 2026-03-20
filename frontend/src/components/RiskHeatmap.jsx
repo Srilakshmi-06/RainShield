@@ -15,12 +15,12 @@ const RiskHeatmap = ({ userCity }) => {
             try {
                 const response = await axios.get(`http://localhost:5000/api/monitor/heatmap/${userCity}`);
                 setZones(response.data);
-                
+
                 // Centering on the first zone found
                 if (response.data && response.data.length > 0) {
                     setMapCenter([response.data[0].lat, response.data[0].lng]);
                 }
-                
+
                 setLoading(false);
             } catch (err) {
                 console.error('Heatmap load failed', err);
@@ -34,7 +34,7 @@ const RiskHeatmap = ({ userCity }) => {
 
     if (loading) return (
         <div className="heatmap-loader" style={{ height: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(15,23,42,0.4)', borderRadius: '24px' }}>
-             <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: 40, height: 40, border: '4px solid #3b82f6', borderTopColor: 'transparent', borderRadius: '50%' }} />
+            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }} style={{ width: 40, height: 40, border: '4px solid #3b82f6', borderTopColor: 'transparent', borderRadius: '50%' }} />
         </div>
     );
 
@@ -47,11 +47,11 @@ const RiskHeatmap = ({ userCity }) => {
 
     return (
         <div className="heatmap-wrapper" style={{ position: 'relative', height: '450px', width: '100%', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
-            
+
             {/* Real Interactive Map Container */}
-            <MapContainer 
-                center={mapCenter} 
-                zoom={11} 
+            <MapContainer
+                center={mapCenter}
+                zoom={11}
                 style={{ height: '100%', width: '100%', background: '#0f172a' }}
                 zoomControl={false}
                 key={`${userCity}-${mapCenter[0]}`} // Force re-render on city change
@@ -61,7 +61,7 @@ const RiskHeatmap = ({ userCity }) => {
                     url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                     attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                 />
-                
+
                 <ZoomControl position="bottomleft" />
 
                 {zones.map((zone, idx) => (
@@ -111,7 +111,7 @@ const RiskHeatmap = ({ userCity }) => {
             </div>
 
             {/* Simulated High-Risk Scan Line (Still kept for aesthetic but restricted to overlay) */}
-            <motion.div 
+            <motion.div
                 animate={{ top: ['0%', '100%'] }}
                 transition={{ repeat: Infinity, duration: 6, ease: 'linear' }}
                 style={{ position: 'absolute', left: 0, right: 0, height: '1px', background: 'rgba(59, 130, 246, 0.3)', zIndex: 900, pointerEvents: 'none' }}

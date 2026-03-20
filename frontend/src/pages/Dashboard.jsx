@@ -44,7 +44,7 @@ const Dashboard = ({ user }) => {
   }, [user]);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -79,8 +79,8 @@ const Dashboard = ({ user }) => {
             <CloudLightning className="metric-icon" />
           </div>
           <div>
-             <p className="metric-label">Zone Risk level</p>
-             <h3 className="metric-value">{loading ? '...' : data?.conditions?.riskLevel}</h3>
+            <p className="metric-label">Zone Risk level</p>
+            <h3 className="metric-value">{loading ? '...' : data?.conditions?.riskLevel}</h3>
           </div>
         </div>
 
@@ -89,23 +89,23 @@ const Dashboard = ({ user }) => {
             <TrendingUp className="metric-icon" />
           </div>
           <div>
-             <p className="metric-label">Predicted Earnings</p>
-             <h3 className="metric-value">
-               {loading ? '...' : `₹${data?.prediction?.predictedEarnings || '0'}`}
-             </h3>
+            <p className="metric-label">Predicted Earnings</p>
+            <h3 className="metric-value">
+              {loading ? '...' : `₹${data?.prediction?.predictedEarnings || '0'}`}
+            </h3>
           </div>
         </div>
 
         <div className="metric-card glass-panel">
-           <div className="metric-icon-wrapper green">
-              <IndianRupee className="metric-icon" />
-           </div>
-           <div>
-              <p className="metric-label">Automated Payout</p>
-              <h3 className="metric-value">
-                ₹{loading ? '...' : (data?.prediction?.payoutAmount || 0)}
-              </h3>
-           </div>
+          <div className="metric-icon-wrapper green">
+            <IndianRupee className="metric-icon" />
+          </div>
+          <div>
+            <p className="metric-label">Automated Payout</p>
+            <h3 className="metric-value">
+              ₹{loading ? '...' : (data?.prediction?.payoutAmount || 0)}
+            </h3>
+          </div>
         </div>
       </div>
 
@@ -119,99 +119,99 @@ const Dashboard = ({ user }) => {
       <div className="dashboard-main grid-2 mt-6">
         {/* Heatmap Section */}
         <div className="main-card glass-panel no-padding-bottom">
-           <RiskHeatmap userCity={user?.city || 'Mumbai'} />
+          <RiskHeatmap userCity={user?.city || 'Mumbai'} />
         </div>
 
-        
+
         {/* Weather Status Card */}
         <div className="main-card glass-panel relative-parent">
-           <div className="flex-between mb-4">
-             <h3>Active Protection Status</h3>
-             <span className="live-badge">● MONITORING</span>
-           </div>
-           
-           <div className="payout-tracker mt-6">
-              <div className="tracker-step active">
-                <div className="step-point"></div>
-                <div className="step-info">
-                  <h4>Region: {data?.city || user?.city}</h4>
-                  <p>Weather sensors connected and active</p>
-                </div>
-              </div>
-              <div className={`tracker-step ${data?.conditions?.riskLevel !== 'Low' ? 'active' : ''}`}>
-                <div className="step-point"></div>
-                <div className="step-info">
-                  <h4>Trigger Detection</h4>
-                  <p>{data?.conditions?.riskLevel === 'High' ? '🚨 Rain Threshold Exceeded!' : 'Conditions below trigger point'}</p>
-                </div>
-              </div>
-              <div className={`tracker-step ${data?.conditions?.riskLevel === 'High' ? 'active' : ''}`}>
-                <div className="step-point"></div>
-                <div className="step-info">
-                  <h4>Automatic Payout</h4>
-                  <p>
-                    {data?.conditions?.riskLevel === 'High' 
-                      ? `✅ ₹${(user?.avgDailyEarnings * (user?.tier === 'basic' ? 0.6 : 1.0)).toFixed(0)} sent to UPI` 
-                      : 'Standby mode'}
-                  </p>
-                </div>
-              </div>
-           </div>
+          <div className="flex-between mb-4">
+            <h3>Active Protection Status</h3>
+            <span className="live-badge">● MONITORING</span>
+          </div>
 
-           <div className="current-conditions mt-8" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
-             <div className="condition">
-               <span>Real Rainfall</span>
-               <strong>{loading ? '...' : data?.conditions?.rainfall}</strong>
-             </div>
-             <div className="condition">
-               <span>Conditions</span>
-               <strong>{loading ? '...' : (data?.conditions?.desc || 'Clear')}</strong>
-             </div>
-             <div className="condition">
-               <span>Protection Cover</span>
-               <strong>{user?.tier === 'basic' ? '60%' : '100%'}</strong>
-             </div>
-           </div>
+          <div className="payout-tracker mt-6">
+            <div className="tracker-step active">
+              <div className="step-point"></div>
+              <div className="step-info">
+                <h4>Region: {data?.city || user?.city}</h4>
+                <p>Weather sensors connected and active</p>
+              </div>
+            </div>
+            <div className={`tracker-step ${data?.conditions?.riskLevel !== 'Low' ? 'active' : ''}`}>
+              <div className="step-point"></div>
+              <div className="step-info">
+                <h4>Trigger Detection</h4>
+                <p>{data?.conditions?.riskLevel === 'High' ? '🚨 Rain Threshold Exceeded!' : 'Conditions below trigger point'}</p>
+              </div>
+            </div>
+            <div className={`tracker-step ${data?.conditions?.riskLevel === 'High' ? 'active' : ''}`}>
+              <div className="step-point"></div>
+              <div className="step-info">
+                <h4>Automatic Payout</h4>
+                <p>
+                  {data?.conditions?.riskLevel === 'High'
+                    ? `✅ ₹${(user?.avgDailyEarnings * (user?.tier === 'basic' ? 0.6 : 1.0)).toFixed(0)} sent to UPI`
+                    : 'Standby mode'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="current-conditions mt-8" style={{ borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: '1.5rem' }}>
+            <div className="condition">
+              <span>Real Rainfall</span>
+              <strong>{loading ? '...' : data?.conditions?.rainfall}</strong>
+            </div>
+            <div className="condition">
+              <span>Conditions</span>
+              <strong>{loading ? '...' : (data?.conditions?.desc || 'Clear')}</strong>
+            </div>
+            <div className="condition">
+              <span>Protection Cover</span>
+              <strong>{user?.tier === 'basic' ? '60%' : '100%'}</strong>
+            </div>
+          </div>
         </div>
 
         {/* Payout History & Timeline */}
         <div className="main-card glass-panel timeline-card">
-           <div className="flex-between mb-4">
-              <h3>Recent Activity</h3>
-              <a href="#" className="view-all">View All</a>
-           </div>
+          <div className="flex-between mb-4">
+            <h3>Recent Activity</h3>
+            <a href="#" className="view-all">View All</a>
+          </div>
 
-           <div className="timeline">
-              {activity.length > 0 ? (
-                activity.map((item, index) => (
-                  <div key={item.id || index} className="timeline-item">
-                    <div className={`timeline-icon ${item.risk_level === 'HIGH' ? 'bg-red' : item.risk_level === 'MEDIUM' ? 'bg-blue' : 'bg-green'}`}>
-                      {item.risk_level === 'HIGH' ? <ShieldAlert size={16} /> : item.risk_level === 'MEDIUM' ? <CloudLightning size={16} /> : <CheckCircle size={16} />}
-                    </div>
-                    <div className="timeline-content">
-                      <h4>{item.risk_level} Risk Detected</h4>
-                      <p>{item.rainfall}mm rain at {item.temperature}°C</p>
-                      {item.payout_amount > 0 && (
-                        <span className="amount positive">+ ₹{item.payout_amount}</span>
-                      )}
-                    </div>
-                    <span className="time-text">
-                      {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                ))
-              ) : (
-                <div className="timeline-item opacity-50">
-                  <div className="timeline-icon bg-gray">
-                    <CheckCircle size={16} />
+          <div className="timeline">
+            {activity.length > 0 ? (
+              activity.map((item, index) => (
+                <div key={item.id || index} className="timeline-item">
+                  <div className={`timeline-icon ${item.risk_level === 'HIGH' ? 'bg-red' : item.risk_level === 'MEDIUM' ? 'bg-blue' : 'bg-green'}`}>
+                    {item.risk_level === 'HIGH' ? <ShieldAlert size={16} /> : item.risk_level === 'MEDIUM' ? <CloudLightning size={16} /> : <CheckCircle size={16} />}
                   </div>
                   <div className="timeline-content">
-                    <h4>No Recent Activity</h4>
-                    <p>Monitoring your zone for risks...</p>
+                    <h4>{item.risk_level} Risk Detected</h4>
+                    <p>{item.rainfall}mm rain at {item.temperature}°C</p>
+                    {item.payout_amount > 0 && (
+                      <span className="amount positive">+ ₹{item.payout_amount}</span>
+                    )}
                   </div>
+                  <span className="time-text">
+                    {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
                 </div>
-              )}
-           </div>
+              ))
+            ) : (
+              <div className="timeline-item opacity-50">
+                <div className="timeline-icon bg-gray">
+                  <CheckCircle size={16} />
+                </div>
+                <div className="timeline-content">
+                  <h4>No Recent Activity</h4>
+                  <p>Monitoring your zone for risks...</p>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
       </div>

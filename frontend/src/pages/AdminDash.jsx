@@ -15,11 +15,11 @@ const AdminDash = () => {
       setMonitorData(update);
       // Simulate tracking multiple city triggers for admin view
       if (update.conditions.riskLevel === 'High') {
-         setActiveTriggers(prev => {
-             const exists = prev.find(t => t.city === update.city);
-             if (exists) return prev;
-             return [...prev, { city: update.city, reason: update.conditions.desc || 'Heavy Rainfall', amount: '₹14,500', time: 'Just Now' }];
-         });
+        setActiveTriggers(prev => {
+          const exists = prev.find(t => t.city === update.city);
+          if (exists) return prev;
+          return [...prev, { city: update.city, reason: update.conditions.desc || 'Heavy Rainfall', amount: '₹14,500', time: 'Just Now' }];
+        });
       }
     });
 
@@ -29,7 +29,7 @@ const AdminDash = () => {
   }, []);
 
   return (
-    <motion.div 
+    <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="dashboard-container container"
@@ -80,14 +80,14 @@ const AdminDash = () => {
       </div>
 
       <div className="dashboard-main grid-2 mt-8">
-        
+
         {/* Live Surveillance */}
         <div className="main-card glass-panel p-6">
           <div className="flex-between mb-6">
             <h3>Live City Monitor: {monitorData?.city || 'Scanning...'}</h3>
             <span className="live-badge" style={{ color: 'var(--accent)' }}>● LIVE API</span>
           </div>
-          
+
           <table className="admin-table" style={{ width: '100%', textAlign: 'left', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-glass)' }}>
@@ -122,47 +122,47 @@ const AdminDash = () => {
               </tr>
             </tbody>
           </table>
-          
+
           <div className="platform-health mt-8" style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px' }}>
-              <div className="flex-between mb-2">
-                 <span className="small" style={{ color: 'var(--text-muted)' }}>Platform Solvent Reserve</span>
-                 <span className="small">₹8.5 Cr</span>
-              </div>
-              <div className="payout-bar" style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
-                <div className="progress" style={{ width: '85%', height: '100%', background: 'var(--primary)' }}></div>
-              </div>
-           </div>
+            <div className="flex-between mb-2">
+              <span className="small" style={{ color: 'var(--text-muted)' }}>Platform Solvent Reserve</span>
+              <span className="small">₹8.5 Cr</span>
+            </div>
+            <div className="payout-bar" style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
+              <div className="progress" style={{ width: '85%', height: '100%', background: 'var(--primary)' }}></div>
+            </div>
+          </div>
         </div>
 
         {/* Real-time Activity Feed */}
         <div className="main-card glass-panel p-6">
-           <h3>Live Payout Feed</h3>
-           <div className="timeline mt-6">
-              {activeTriggers.length > 0 ? activeTriggers.map((t, i) => (
-                <div key={i} className="timeline-item">
-                  <div className="timeline-icon bg-green"><ShieldCheck size={16} /></div>
-                  <div className="timeline-content">
-                    <h4>{t.amount} Distributed</h4>
-                    <p>Trigger: {t.city} • {t.reason}</p>
-                    <span className="time-text">{t.time}</span>
-                  </div>
-                </div>
-              )) : (
-                <div className="text-center py-10 opacity-50">
-                   <Activity size={32} className="mb-2" />
-                   <p>Waiting for parametric triggers...</p>
-                </div>
-              )}
-              
-              <div className="timeline-item">
-                <div className="timeline-icon bg-blue"><Users size={16} /></div>
+          <h3>Live Payout Feed</h3>
+          <div className="timeline mt-6">
+            {activeTriggers.length > 0 ? activeTriggers.map((t, i) => (
+              <div key={i} className="timeline-item">
+                <div className="timeline-icon bg-green"><ShieldCheck size={16} /></div>
                 <div className="timeline-content">
-                  <h4>New Cohort Added</h4>
-                  <p>120 workers joined from Chennai region.</p>
-                  <span className="time-text">1 hour ago</span>
+                  <h4>{t.amount} Distributed</h4>
+                  <p>Trigger: {t.city} • {t.reason}</p>
+                  <span className="time-text">{t.time}</span>
                 </div>
               </div>
-           </div>
+            )) : (
+              <div className="text-center py-10 opacity-50">
+                <Activity size={32} className="mb-2" />
+                <p>Waiting for parametric triggers...</p>
+              </div>
+            )}
+
+            <div className="timeline-item">
+              <div className="timeline-icon bg-blue"><Users size={16} /></div>
+              <div className="timeline-content">
+                <h4>New Cohort Added</h4>
+                <p>120 workers joined from Chennai region.</p>
+                <span className="time-text">1 hour ago</span>
+              </div>
+            </div>
+          </div>
         </div>
 
       </div>
