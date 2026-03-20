@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { Phone, Lock, LogIn } from 'lucide-react';
+import BACKEND_URL from '../config';
 import '../pages/Signup.css'; // Reusing signup styles
 
 const Login = ({ onAuth }) => {
@@ -17,7 +19,7 @@ const Login = ({ onAuth }) => {
     setError('');
 
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', { phone, password });
+      const res = await axios.post(`${BACKEND_URL}/api/auth/login`, { phone, password });
       onAuth(res.data.user);
       navigate(res.data.user.role === 'admin' ? '/admin' : '/dashboard');
     } catch (err) {

@@ -5,8 +5,9 @@ import { io } from 'socket.io-client';
 import './Dashboard.css';
 
 import RiskHeatmap from '../components/RiskHeatmap';
+import BACKEND_URL from '../config';
 
-const socket = io('http://localhost:5000');
+const socket = io(BACKEND_URL);
 
 const Dashboard = ({ user }) => {
   const [data, setData] = useState(null);
@@ -17,7 +18,7 @@ const Dashboard = ({ user }) => {
     const fetchActivity = async () => {
       try {
         const userId = user?.id || 1;
-        const response = await fetch(`http://localhost:5000/api/monitor/activity/${userId}`);
+        const response = await fetch(`${BACKEND_URL}/api/monitor/activity/${userId}`);
         const result = await response.json();
         setActivity(result);
       } catch (err) {

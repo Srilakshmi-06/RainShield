@@ -9,8 +9,9 @@ import AdminDash from './pages/AdminDash';
 import { AnimatePresence, motion } from 'framer-motion';
 import { io } from 'socket.io-client';
 import { Bell, X } from 'lucide-react';
+import BACKEND_URL from './config';
 
-const socket = io('http://localhost:5000');
+const socket = io(BACKEND_URL);
 
 function App() {
   const [notification, setNotification] = useState(null);

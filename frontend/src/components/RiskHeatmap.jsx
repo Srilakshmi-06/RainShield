@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapPin, Info, CloudRain, Thermometer, Wind } from 'lucide-react';
 import axios from 'axios';
+import BACKEND_URL from '../config';
 import { MapContainer, TileLayer, CircleMarker, Tooltip, ZoomControl } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -13,7 +14,7 @@ const RiskHeatmap = ({ userCity }) => {
     useEffect(() => {
         const fetchHeatmap = async () => {
             try {
-                const response = await axios.get(`http://localhost:5000/api/monitor/heatmap/${userCity}`);
+                const response = await axios.get(`${BACKEND_URL}/api/monitor/heatmap/${userCity}`);
                 setZones(response.data);
 
                 // Centering on the first zone found

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { ShieldCheck, MapPin, Bike, IndianRupee, Loader2 } from 'lucide-react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import BACKEND_URL from '../config';
 import './Signup.css';
 
 const Signup = ({ onAuth }) => {
@@ -26,7 +27,7 @@ const Signup = ({ onAuth }) => {
     setLoading(true);
     setError('');
     try {
-      await axios.post('http://localhost:5000/api/auth/send-otp', { phone });
+      await axios.post(`${BACKEND_URL}/api/auth/send-otp`, { phone });
       alert('Demo Mode: OTP Sent! Check backend console.');
     } catch (err) {
       setError('Failed to send OTP');
@@ -39,7 +40,7 @@ const Signup = ({ onAuth }) => {
     setLoading(true);
     setError('');
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/verify-otp', { phone, otp });
+      const res = await axios.post(`${BACKEND_URL}/api/auth/verify-otp`, { phone, otp });
       if (res.data.success) {
         setStep(2);
       }
@@ -67,7 +68,7 @@ const Signup = ({ onAuth }) => {
     };
 
     try {
-        const res = await axios.post('http://localhost:5000/api/auth/signup', userData);
+        const res = await axios.post(`${BACKEND_URL}/api/auth/signup`, userData);
         onAuth(res.data.user);
         navigate('/dashboard');
     } catch (err) {
