@@ -19,7 +19,9 @@ const getWeatherData = async (city) => {
             humidity: weather.main.humidity,
             windSpeed: weather.wind.speed,
             description: weather.weather[0].description,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            lat: weather.coord.lat,
+            lon: weather.coord.lon
         };
     } catch (error) {
         console.error(`[WEATHER SERVICE ERROR] ${error.message}`);

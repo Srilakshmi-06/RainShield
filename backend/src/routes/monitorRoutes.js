@@ -87,9 +87,12 @@ router.get('/heatmap/:city', async (req, res) => {
         const { getWeatherData } = require('../services/weatherService');
         const { getMLPrediction } = require('../services/mlService');
 
+        // Get base city coordinates first
+        const baseWeather = await getWeatherData(city);
+
         const heatmapData = await Promise.all(zones.map(async (zone) => {
-            // For a real app, we'd use lat/lon. For now, we use zone names to get variations.
-            const weather = await getWeatherData(zone.name).catch(() => getWeatherData(city)); 
+            // Fetch weather variations. Fallback to base city if zone-specific fails
+            const weather = await getWeatherData(zone.name).catch(() => baseWeather); 
             
             const prediction = await getMLPrediction({
                 rainMm: weather.rainfall,
@@ -103,13 +106,14 @@ router.get('/heatmap/:city', async (req, res) => {
                 rainfall: weather.rainfall,
                 temp: weather.temp,
                 riskLevel: prediction ? prediction.risk_level : 'Low',
-                lat: 19.0760 + zone.offset.lat, // Mumbai base lat
-                lng: 72.8777 + zone.offset.lon  // Mumbai base lng
+                lat: baseWeather.lat + zone.offset.lat, 
+                lng: baseWeather.lon + zone.offset.lon  
             };
         }));
 
         res.json(heatmapData);
     } catch (err) {
+        console.error('Heatmap Error:', err.message);
         res.status(500).json({ error: 'Failed to generate heatmap' });
     }
 });
