@@ -1,10 +1,10 @@
-# 🛡️ RainShield: Parametric Insurance for the Gig Economy
+#  RainShield: Parametric Insurance for the Gig Economy
 
 **RainShield** is a next-generation parametric insurance platform designed to protect gig workers—specifically delivery partners and taxi drivers—from income loss caused by adverse weather conditions.
 
 ---
 
-## 🎯 Core Strategy & Persona Scenarios
+##  Core Strategy & Persona Scenarios
 
 ### The Problem
 Gig workers are paid "per delivery/ride." On heavy rain days, their income drops by **30-60%** due to reduced mobility, road closures, or safety concerns. Traditional insurance is too expensive, complex, and slow to pay out.
@@ -26,7 +26,7 @@ Gig workers are paid "per delivery/ride." On heavy rain days, their income drops
 
 ---
 
-## 💸 Weekly Premium & Parametric Model
+##  Weekly Premium & Parametric Model
 
 ### Why a Weekly Model?
 -   **Flexibility**: Gig workers have fluctuating income. A monthly or yearly commitment is a barrier.
@@ -47,7 +47,7 @@ We chose a **Responsive Web Platform** (React/Vite) for the MVP because:
 
 ---
 
-## 🤖 AI/ML Integration Plans
+##  AI/ML Integration Plans
 
 AI is the brain of RainShield, moving it from "Static Triggers" to "Dynamic Risk Management."
 
@@ -63,7 +63,7 @@ AI is the brain of RainShield, moving it from "Static Triggers" to "Dynamic Risk
 
 ---
 
-## 🛠️ Tech Stack & Development Plan
+##  Tech Stack & Development Plan
 
 ### Tech Stack
 -   **Frontend**: React.js, Vite, Vanilla CSS (Premium Aesthetics).
@@ -82,5 +82,5 @@ AI is the brain of RainShield, moving it from "Static Triggers" to "Dynamic Risk
 
 ---
 
-## 💡 Why RainShield Matters?
+##  Why RainShield Matters?
 In an era of climate uncertainty, gig workers are the most vulnerable. RainShield uses **FinTech + WeatherData** to build a safety net that is as fast and dynamic as the gig economy itself.
