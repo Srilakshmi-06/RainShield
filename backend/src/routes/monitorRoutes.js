@@ -2,16 +2,20 @@ const express = require('express');
 const router = express.Router();
 
 const { getMLPrediction } = require('../services/mlService');
-const pgDb = require('../pgDb');
+const { WeatherPrediction, Claim, User, Policy } = require('../models');
 
 router.get('/status/:zone', async (req, res) => {
     const { zone } = req.params;
-    const userId = req.query.userId || 1; 
+    const phone = req.query.phone || '999'; // Use phone as identifier for demo
     
     try {
         const { getWeatherData } = require('../services/weatherService');
         const { getMLPrediction } = require('../services/mlService');
         
+        // Find user by phone in MongoDB
+        const user = await User.findOne({ phone: phone });
+        const userId = user ? user._id : null;
+
         // Fetch LIVE data
         const weather = await getWeatherData(zone);
         
@@ -27,15 +31,22 @@ router.get('/status/:zone', async (req, res) => {
         const predictedEarnings = prediction ? prediction.predicted_earnings : 800;
         const payoutAmount = prediction ? prediction.recommended_payout : 0;
 
-    // Store in PostgreSQL
-    try {
-        await pgDb.query(
-            'INSERT INTO weather_risk_predictions (user_id, rainfall, temperature, predicted_earnings, risk_level, payout_amount) VALUES ($1, $2, $3, $4, $5, $6)',
-            [userId, rainMm, temp, predictedEarnings, riskLevel, payoutAmount]
-        );
-    } catch (err) {
-        console.error('Failed to store prediction in PostgreSQL:', err.message);
-    }
+        // Store in MongoDB
+        if (userId) {
+            try {
+                const newPrediction = new WeatherPrediction({
+                    userId,
+                    rainfall: weather.rainfall,
+                    temperature: weather.temp,
+                    predictedEarnings,
+                    riskLevel,
+                    payoutAmount
+                });
+                await newPrediction.save();
+            } catch (err) {
+                console.error('Failed to store prediction in MongoDB:', err.message);
+            }
+        }
 
         res.json({
             zone,
@@ -60,16 +71,22 @@ router.get('/status/:zone', async (req, res) => {
 });
 
 router.get('/activity/:userId', async (req, res) => {
-    const { userId } = req.params;
     try {
-        const result = await pgDb.query(
-            'SELECT * FROM weather_risk_predictions WHERE user_id = $1 ORDER BY timestamp DESC LIMIT 10',
-            [userId]
-        );
-        res.json(result.rows);
+        // userId can be MongoID or Phone for fallback
+        let filter = { userId: req.params.userId };
+        if (!req.params.userId.match(/^[0-9a-fA-F]{24}$/)) {
+            const user = await User.findOne({ phone: req.params.userId });
+            filter = { userId: user ? user._id : null };
+        }
+
+        const results = await WeatherPrediction.find(filter)
+            .sort({ timestamp: -1 })
+            .limit(10);
+        
+        res.json(results);
     } catch (err) {
-        console.error('Failed to fetch activity:', err.message);
-        res.status(500).json({ error: 'Failed to fetch activity' });
+        console.error('[DATABASE ERROR] Activity Fetch:', err.message);
+        res.status(500).json({ error: 'MongoDB Fetch Error' });
     }
 });
 
@@ -118,25 +135,38 @@ router.get('/heatmap/:city', async (req, res) => {
     }
 });
 
-// Claim Management Routes
+// Claim Management Routes (MongoDB)
 router.post('/submit-claim', async (req, res) => {
     const { userId, type, description, amount, alertId } = req.body;
     
     try {
-        // Fetch active policy
-        const policyRes = await pgDb.query('SELECT id FROM policies WHERE user_id = $1 AND status = \'active\'', [userId]);
-        const policyId = policyRes.rows[0] ? policyRes.rows[0].id : null;
+        // Find user by id or phone
+        let targetUserId = userId;
+        if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
+            const user = await User.findOne({ phone: userId });
+            targetUserId = user ? user._id : null;
+        }
 
-        const result = await pgDb.query(
-            'INSERT INTO claims (user_id, policy_id, risk_alert_id, claim_type, description, amount, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
-            [userId, policyId, alertId, type, description, amount, 'Pending']
-        );
+        // Fetch active policy from MongoDB
+        const policy = await Policy.findOne({ userId: targetUserId, status: 'active' });
+
+        const newClaim = new Claim({
+            userId: targetUserId,
+            policyId: policy ? policy._id : null,
+            riskAlertId: alertId, // AlertId can be a dummy or MongoId
+            claimType: type,
+            description,
+            amount,
+            status: 'Pending'
+        });
+
+        await newClaim.save();
 
         res.json({
             success: true,
-            claimId: result.rows[0].id,
+            claimId: newClaim._id,
             status: 'Pending',
-            message: 'Claim submitted successfully!'
+            message: 'Claim submitted successfully in MongoDB!'
         });
     } catch (err) {
         console.error('Claim Submission Error:', err.message);
@@ -145,16 +175,18 @@ router.post('/submit-claim', async (req, res) => {
 });
 
 router.get('/claims/:userId', async (req, res) => {
-    const { userId } = req.params;
     try {
-        const result = await pgDb.query(
-            'SELECT * FROM claims WHERE user_id = $1 ORDER BY submitted_at DESC',
-            [userId]
-        );
-        res.json(result.rows);
+        let filter = { userId: req.params.userId };
+        if (!req.params.userId.match(/^[0-9a-fA-F]{24}$/)) {
+            const user = await User.findOne({ phone: req.params.userId });
+            filter = { userId: user ? user._id : null };
+        }
+
+        const results = await Claim.find(filter).sort({ submittedAt: -1 });
+        res.json(results);
     } catch (err) {
-        console.error('Failed to fetch claims:', err.message);
-        res.status(500).json({ error: 'Failed to fetch claims history' });
+        console.error('[DATABASE ERROR] Claims Fetch:', err.message);
+        res.status(500).json({ error: 'MongoDB Fetch Error' });
     }
 });
 

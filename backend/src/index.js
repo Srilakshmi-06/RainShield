@@ -45,11 +45,15 @@ io.on('connection', (socket) => {
     const sendUpdate = async () => {
         const { getWeatherData } = require('./services/weatherService');
         const { getMLPrediction, calculateDynamicPremium } = require('./services/mlService');
-        const pgDb = require('./pgDb');
+        const { WeatherPrediction, Policy, RiskAlert, User } = require('./models');
         
         try {
             const weather = await getWeatherData(city);
             
+            // Find user in MongoDB
+            const user = await User.findOne({ city: city }); // Simplify: find any user in that city for demo
+            const userId = user ? user._id : null;
+
             const prediction = await getMLPrediction({
                 rainMm: weather.rainfall,
                 temp: weather.temp,
@@ -57,7 +61,7 @@ io.on('connection', (socket) => {
                 windSpeed: weather.windSpeed
             });
 
-            // Calculate Dynamic Premium (Base premium ₹200 assumed)
+            // Calculate Dynamic Premium
             const dynamicPremium = calculateDynamicPremium(200, weather);
 
             const weatherData = {
@@ -77,38 +81,43 @@ io.on('connection', (socket) => {
                 } : null
             };
 
-            // Automated Triggers & Alerts
+            // Automated Triggers & Alerts (Store in MongoDB)
             if (weather.rainfall > 10) {
               const msg = `🚨 Flood risk alert in ${city}! Suggested Claim for delivery loss.`;
               socket.emit('riskAlert', { id: Date.now(), type: 'Flood', message: msg, suggestClaim: true });
-              try {
-                await pgDb.query(
-                  'INSERT INTO risk_alerts (user_id, city, risk_type, risk_level, message, suggested_claim) VALUES ($1, $2, $3, $4, $5, $6)',
-                  [1, city, 'Flood', 'High', msg, true]
-                );
-              } catch (e) { console.error('Alert Store Error:', e.message); }
+              if (userId) {
+                const alert = new RiskAlert({ userId, city, riskType: 'Flood', riskLevel: 'High', message: msg, suggestedClaim: true });
+                await alert.save().catch(e => console.error('Alert Save Error:', e.message));
+              }
             } else if (weather.temp > 40) {
               const msg = `🚨 Health risk: Extreme heat in ${city}! Stay hydrated.`;
               socket.emit('riskAlert', { id: Date.now(), type: 'Health', message: msg, suggestClaim: false });
-              try {
-                await pgDb.query(
-                  'INSERT INTO risk_alerts (user_id, city, risk_type, risk_level, message, suggested_claim) VALUES ($1, $2, $3, $4, $5, $6)',
-                  [1, city, 'Health', 'High', msg, false]
-                );
-              } catch (e) { console.error('Alert Store Error:', e.message); }
+              if (userId) {
+                const alert = new RiskAlert({ userId, city, riskType: 'Health', riskLevel: 'High', message: msg, suggestedClaim: false });
+                await alert.save().catch(e => console.error('Alert Save Error:', e.message));
+              }
             }
 
-            if (prediction) {
+            if (prediction && userId) {
                 try {
-                    await pgDb.query(
-                        'INSERT INTO weather_risk_predictions (user_id, rainfall, temperature, predicted_earnings, risk_level, payout_amount) VALUES ($1, $2, $3, $4, $5, $6)',
-                        [1, weather.rainfall, weather.temp, prediction.predicted_earnings, prediction.risk_level, prediction.recommended_payout]
-                    );
+                    const newPred = new WeatherPrediction({
+                        userId,
+                        rainfall: weather.rainfall,
+                        temperature: weather.temp,
+                        predictedEarnings: prediction.predicted_earnings,
+                        riskLevel: prediction.risk_level,
+                        payoutAmount: prediction.recommended_payout
+                    });
+                    await newPred.save();
                     
-                    // Update current premium in policy for user (Assumed user_id=1 for simplicity)
-                    await pgDb.query('UPDATE policies SET current_premium = $1 WHERE user_id = $2', [dynamicPremium, 1]);
+                    // Update current premium in MongoDB Policy
+                    await Policy.findOneAndUpdate(
+                      { userId: userId, status: 'active' },
+                      { currentPremium: dynamicPremium },
+                      { upsert: false }
+                    );
                 } catch (dbErr) {
-                    console.error('PostgreSQL Storage Error:', dbErr.message);
+                    console.error('MongoDB Features Error:', dbErr.message);
                 }
             }
 

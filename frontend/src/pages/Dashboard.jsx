@@ -22,9 +22,10 @@ const Dashboard = ({ user }) => {
       const userId = user?.id || 1;
       const response = await fetch(`${BACKEND_URL}/api/monitor/claims/${userId}`);
       const result = await response.json();
-      setClaims(result);
+      setClaims(Array.isArray(result) ? result : []);
     } catch (err) {
       console.error('Error fetching claims:', err);
+      setClaims([]);
     }
   };
 
@@ -33,9 +34,10 @@ const Dashboard = ({ user }) => {
       const userId = user?.id || 1;
       const response = await fetch(`${BACKEND_URL}/api/monitor/activity/${userId}`);
       const result = await response.json();
-      setActivity(result);
+      setActivity(Array.isArray(result) ? result : []);
     } catch (err) {
       console.error('Error fetching activity:', err);
+      setActivity([]);
     }
   };
 
@@ -226,7 +228,7 @@ const Dashboard = ({ user }) => {
                 <p>{data?.conditions?.riskLevel === 'High' ? '🚨 Risk Threshold Exceeded!' : 'Conditions Stable'}</p>
               </div>
             </div>
-            <div className={`tracker-step ${claims.some(c => c.status === 'Pending') ? 'active' : ''}`}>
+            <div className={`tracker-step ${Array.isArray(claims) && claims.some(c => c.status === 'Pending') ? 'active' : ''}`}>
               <div className="step-point"></div>
               <div className="step-info">
                 <h4>Claim Lifecycle</h4>
