@@ -118,4 +118,44 @@ router.get('/heatmap/:city', async (req, res) => {
     }
 });
 
+// Claim Management Routes
+router.post('/submit-claim', async (req, res) => {
+    const { userId, type, description, amount, alertId } = req.body;
+    
+    try {
+        // Fetch active policy
+        const policyRes = await pgDb.query('SELECT id FROM policies WHERE user_id = $1 AND status = \'active\'', [userId]);
+        const policyId = policyRes.rows[0] ? policyRes.rows[0].id : null;
+
+        const result = await pgDb.query(
+            'INSERT INTO claims (user_id, policy_id, risk_alert_id, claim_type, description, amount, status) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id',
+            [userId, policyId, alertId, type, description, amount, 'Pending']
+        );
+
+        res.json({
+            success: true,
+            claimId: result.rows[0].id,
+            status: 'Pending',
+            message: 'Claim submitted successfully!'
+        });
+    } catch (err) {
+        console.error('Claim Submission Error:', err.message);
+        res.status(500).json({ error: 'Failed to submit claim' });
+    }
+});
+
+router.get('/claims/:userId', async (req, res) => {
+    const { userId } = req.params;
+    try {
+        const result = await pgDb.query(
+            'SELECT * FROM claims WHERE user_id = $1 ORDER BY submitted_at DESC',
+            [userId]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Failed to fetch claims:', err.message);
+        res.status(500).json({ error: 'Failed to fetch claims history' });
+    }
+});
+
 module.exports = router;

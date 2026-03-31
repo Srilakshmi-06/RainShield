@@ -44,7 +44,7 @@ io.on('connection', (socket) => {
     
     const sendUpdate = async () => {
         const { getWeatherData } = require('./services/weatherService');
-        const { getMLPrediction } = require('./services/mlService');
+        const { getMLPrediction, calculateDynamicPremium } = require('./services/mlService');
         const pgDb = require('./pgDb');
         
         try {
@@ -57,9 +57,13 @@ io.on('connection', (socket) => {
                 windSpeed: weather.windSpeed
             });
 
+            // Calculate Dynamic Premium (Base premium ₹200 assumed)
+            const dynamicPremium = calculateDynamicPremium(200, weather);
+
             const weatherData = {
                 timestamp: weather.timestamp,
                 city: weather.city,
+                dynamicPremium: dynamicPremium,
                 conditions: {
                     rainfall: `${weather.rainfall} mm/hr`,
                     temp: `${weather.temp}°C`,
@@ -73,33 +77,57 @@ io.on('connection', (socket) => {
                 } : null
             };
 
+            // Automated Triggers & Alerts
+            if (weather.rainfall > 10) {
+              const msg = `🚨 Flood risk alert in ${city}! Suggested Claim for delivery loss.`;
+              socket.emit('riskAlert', { id: Date.now(), type: 'Flood', message: msg, suggestClaim: true });
+              try {
+                await pgDb.query(
+                  'INSERT INTO risk_alerts (user_id, city, risk_type, risk_level, message, suggested_claim) VALUES ($1, $2, $3, $4, $5, $6)',
+                  [1, city, 'Flood', 'High', msg, true]
+                );
+              } catch (e) { console.error('Alert Store Error:', e.message); }
+            } else if (weather.temp > 40) {
+              const msg = `🚨 Health risk: Extreme heat in ${city}! Stay hydrated.`;
+              socket.emit('riskAlert', { id: Date.now(), type: 'Health', message: msg, suggestClaim: false });
+              try {
+                await pgDb.query(
+                  'INSERT INTO risk_alerts (user_id, city, risk_type, risk_level, message, suggested_claim) VALUES ($1, $2, $3, $4, $5, $6)',
+                  [1, city, 'Health', 'High', msg, false]
+                );
+              } catch (e) { console.error('Alert Store Error:', e.message); }
+            }
+
             if (prediction) {
                 try {
                     await pgDb.query(
                         'INSERT INTO weather_risk_predictions (user_id, rainfall, temperature, predicted_earnings, risk_level, payout_amount) VALUES ($1, $2, $3, $4, $5, $6)',
                         [1, weather.rainfall, weather.temp, prediction.predicted_earnings, prediction.risk_level, prediction.recommended_payout]
                     );
+                    
+                    // Update current premium in policy for user (Assumed user_id=1 for simplicity)
+                    await pgDb.query('UPDATE policies SET current_premium = $1 WHERE user_id = $2', [dynamicPremium, 1]);
                 } catch (dbErr) {
                     console.error('PostgreSQL Storage Error:', dbErr.message);
                 }
             }
 
-            if (weatherData.conditions.riskLevel === 'High' || (weatherData.prediction && weatherData.prediction.riskLevel === 'HIGH')) {
+            if (weatherData.conditions.riskLevel === 'High' || (weatherData.prediction && (weatherData.prediction.riskLevel === 'High' || weatherData.prediction.riskLevel === 'HIGH'))) {
                 const payout = weatherData.prediction ? weatherData.prediction.payoutAmount : 0;
                 socket.emit('pushNotification', {
-                    title: `🚨 Payout Triggered!`,
+                    title: `🚨 Payout Alert!`,
                     message: payout > 0 
-                      ? `Heavy rain detected in ${city}. A payout of ₹${payout} has been initiated to your UPI.`
-                      : `Severe conditions in ${city}. Stay safe!`,
+                      ? `Risk level HIGH in ${city}. You can submit a claim for ₹${payout}.`
+                      : `Risk level HIGH in ${city}. Stay safe!`,
                     type: 'danger',
-                    payout: payout
+                    payout: payout,
+                    canClaim: true 
                 });
             }
 
             socket.emit('weatherUpdate', weatherData);
         } catch (err) {
             console.error(`[WEATHER UPDATE FAILED] ${err.message}`);
-            // No fallback to simulation, per user request.
         }
     };
 

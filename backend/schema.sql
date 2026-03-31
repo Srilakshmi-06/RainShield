@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS policies (
     start_date DATE DEFAULT CURRENT_DATE,
     end_date DATE,
     premium_amount DECIMAL(10, 2),
+    current_premium DECIMAL(10, 2), -- Dynamic premium
     status VARCHAR(20) DEFAULT 'active',
     last_payout_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -44,4 +45,42 @@ CREATE TABLE IF NOT EXISTS weather_logs (
     aqi INTEGER,
     risk_level VARCHAR(20),
     logged_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Trigger Events / Risk Alerts
+CREATE TABLE IF NOT EXISTS risk_alerts (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    city VARCHAR(100),
+    risk_type VARCHAR(50), -- Flood, Health, Accident
+    risk_level VARCHAR(20), -- Low, Medium, High
+    message TEXT,
+    suggested_claim BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Claims table
+CREATE TABLE IF NOT EXISTS claims (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    policy_id INTEGER REFERENCES policies(id),
+    risk_alert_id INTEGER REFERENCES risk_alerts(id),
+    claim_type VARCHAR(50),
+    description TEXT,
+    amount DECIMAL(10, 2),
+    status VARCHAR(20) DEFAULT 'Pending', -- Pending, Approved, Rejected
+    submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Weather Risk Predictions
+CREATE TABLE IF NOT EXISTS weather_risk_predictions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id),
+    rainfall DECIMAL(5, 2),
+    temperature DECIMAL(5, 2),
+    predicted_earnings DECIMAL(10, 2),
+    risk_level VARCHAR(20),
+    payout_amount DECIMAL(10, 2),
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
