@@ -34,7 +34,7 @@ const AdminDash = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="dashboard-container container"
-      style={{ paddingTop: '100px' }}
+      style={{ padding: '2rem' }}
     >
       <header className="dashboard-header mb-6">
         <div>

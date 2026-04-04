@@ -1,13 +1,16 @@
 const axios = require('axios');
 
 const getWeatherData = async (city) => {
+    // Basic cleaning: Remove '(Auto)' suffix if present from geolocation
+    const cleanCity = city.split(' (')[0].trim();
+    
     const apiKey = process.env.WEATHER_API_KEY;
     if (!apiKey) {
         throw new Error('Weather API key is missing');
     }
 
     try {
-        const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`);
+        const response = await axios.get(`https://api.openweathermap.org/data/2.5/weather?q=${cleanCity}&appid=${apiKey}&units=metric`);
         const weather = response.data;
         
         const rain = weather.rain ? (weather.rain['1h'] || 0) : 0;

@@ -5,26 +5,40 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     phone VARCHAR(15) UNIQUE NOT NULL,
     name VARCHAR(100) NOT NULL,
+    age INTEGER,
     city VARCHAR(100),
     platform VARCHAR(50),
     vehicle_type VARCHAR(50),
+    working_hours INTEGER,
+    preferred_zones TEXT,
+    risk_score DECIMAL(5, 2) DEFAULT 0.00,
     coverage_tier VARCHAR(20) DEFAULT 'basic',
-    avg_daily_earnings DECIMAL(10, 2) DEFAULT 0.00,
+    avg_daily_earnings DECIMAL(10, 2) DEFAULT 800.00,
+    verification_status VARCHAR(20) DEFAULT 'unverified',
+    documents_linked BOOLEAN DEFAULT FALSE,
+    role VARCHAR(20) DEFAULT 'worker',
     status VARCHAR(20) DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Active Policies
+-- Active & Past Policies
 CREATE TABLE IF NOT EXISTS policies (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id),
+    coverage_tier VARCHAR(20) DEFAULT 'standard', -- basic, standard, premium
     start_date DATE DEFAULT CURRENT_DATE,
     end_date DATE,
     premium_amount DECIMAL(10, 2),
-    current_premium DECIMAL(10, 2), -- Dynamic premium
-    status VARCHAR(20) DEFAULT 'active',
+    current_premium DECIMAL(10, 2), -- Dynamic premium scaling
+    payout_limit DECIMAL(10, 2),
+    status VARCHAR(20) DEFAULT 'active', -- active, expiring_soon, expired, pending_renewal
+    auto_renew BOOLEAN DEFAULT TRUE,
+    grace_period_end DATE,
+    risk_level VARCHAR(20) DEFAULT 'Low', -- Current risk factor
+    risk_insights JSONB, -- { breakdown: {}, factors: [], payout_scenarios: {} }
     last_payout_date DATE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Payout History

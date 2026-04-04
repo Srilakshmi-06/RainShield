@@ -35,7 +35,6 @@ const Login = ({ onAuth }) => {
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -20 }}
       className="signup-container container"
-      style={{ paddingTop: '100px' }}
     >
       <div className="signup-card glass-panel" style={{ maxWidth: '400px', padding: '3rem 2.5rem' }}>
         <div className="signup-header">

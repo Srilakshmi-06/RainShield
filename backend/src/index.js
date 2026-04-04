@@ -12,6 +12,7 @@ const server = http.createServer(app);
 
 // Connect to MongoDB
 connectDB();
+
 const io = new Server(server, {
   cors: {
     origin: "*", // Allow all origins for deployment
@@ -26,11 +27,17 @@ app.use(express.json());
 const authRoutes = require('./routes/authRoutes');
 const monitorRoutes = require('./routes/monitorRoutes');
 const payoutRoutes = require('./routes/payoutRoutes');
+const policyRoutes = require('./routes/policyRoutes');
+const claimRoutes = require('./routes/claimRoutes');
+const PolicyService = require('./services/policyService');
+const ClaimService = require('./services/claimService');
 
 // App Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/monitor', monitorRoutes);
 app.use('/api/payout', payoutRoutes);
+app.use('/api/policies', policyRoutes);
+app.use('/api/claims', claimRoutes);
 
 const axios = require('axios');
 
@@ -55,19 +62,22 @@ io.on('connection', (socket) => {
             const userId = user ? user._id : null;
 
             const prediction = await getMLPrediction({
-                rainMm: weather.rainfall,
+                rainfall: weather.rainfall,
                 temp: weather.temp,
                 humidity: weather.humidity,
                 windSpeed: weather.windSpeed
+            }, { 
+                workingHours: 8, // Default for background monitor
+                riskScore: 20 
             });
 
-            // Calculate Dynamic Premium
+            // Calculate Dynamic Premium (returns { final, breakdown, explanation })
             const dynamicPremium = calculateDynamicPremium(200, weather);
 
             const weatherData = {
                 timestamp: weather.timestamp,
                 city: weather.city,
-                dynamicPremium: dynamicPremium,
+                dynamicPremium: dynamicPremium.final,
                 conditions: {
                     rainfall: `${weather.rainfall} mm/hr`,
                     temp: `${weather.temp}°C`,
@@ -113,20 +123,37 @@ io.on('connection', (socket) => {
                     // Update current premium in MongoDB Policy
                     await Policy.findOneAndUpdate(
                       { userId: userId, status: 'active' },
-                      { currentPremium: dynamicPremium },
+                      { 
+                        currentPremium: dynamicPremium.final,
+                        riskLevel: prediction.risk_level,
+                        riskInsights: {
+                            breakdown: dynamicPremium.breakdown,
+                            explanation: dynamicPremium.explanation,
+                            factors: dynamicPremium.explanation.split(' because of ')[1]?.split(', ') || ['Stable conditions']
+                        }
+                      },
                       { upsert: false }
                     );
+                    // Proactive Claim Suggestion Logic
+                    if (dynamicPremium.final > 250 || prediction.loss_percentage > 15) {
+                        const suggestion = await ClaimService.suggestClaim(userId, weatherData, prediction);
+                        if (suggestion) {
+                            socket.emit('claimSuggestion', suggestion);
+                        }
+                    }
+
                 } catch (dbErr) {
                     console.error('MongoDB Features Error:', dbErr.message);
                 }
             }
 
-            if (weatherData.conditions.riskLevel === 'High' || (weatherData.prediction && (weatherData.prediction.riskLevel === 'High' || weatherData.prediction.riskLevel === 'HIGH'))) {
-                const payout = weatherData.prediction ? weatherData.prediction.payoutAmount : 0;
+            // Real-time Risk Alerts based on conditions
+            if (weather.rainfall > 10 || (prediction && prediction.risk_level === 'HIGH')) {
+                const payout = prediction ? prediction.recommended_payout : 0;
                 socket.emit('pushNotification', {
-                    title: `🚨 Payout Alert!`,
+                    title: `🚨 Payout Eligible!`,
                     message: payout > 0 
-                      ? `Risk level HIGH in ${city}. You can submit a claim for ₹${payout}.`
+                      ? `Risk level HIGH in ${city}. Predicted loss detected. You can submit a one-click claim for ₹${payout}.`
                       : `Risk level HIGH in ${city}. Stay safe!`,
                     type: 'danger',
                     payout: payout,
@@ -135,8 +162,16 @@ io.on('connection', (socket) => {
             }
 
             socket.emit('weatherUpdate', weatherData);
+
+            // Intelligent Policy Adjustment (MongoDB)
+            if (user && user.phone) {
+                const adjustedPolicy = await PolicyService.adjustWithRiskInsights(user.phone, weather, prediction);
+                if (adjustedPolicy) {
+                    socket.emit('policyUpdate', adjustedPolicy);
+                }
+            }
         } catch (err) {
-            console.error(`[WEATHER UPDATE FAILED] ${err.message}`);
+            console.error(`[WEATHER/POLICY UPDATE FAILED] ${err.message}`);
         }
     };
 

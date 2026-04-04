@@ -48,8 +48,6 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Navbar user={user} onLogout={handleLogout} />
-
       {/* Global Real-time Notification Toast */}
       <AnimatePresence>
         {notification && (
@@ -117,7 +115,7 @@ function App() {
       <div className="main-content" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <AnimatePresence mode="wait">
           <Routes>
-            <Route path="/" element={<Landing />} />
+            <Route path="/" element={<Landing user={user} onLogout={handleLogout} />} />
             <Route path="/signup" element={<Signup onAuth={handleLogin} />} />
             <Route path="/login" element={<Login onAuth={handleLogin} />} />
             <Route

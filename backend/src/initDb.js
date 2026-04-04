@@ -11,19 +11,25 @@ const pool = new Pool({
 
 const initializeDatabase = async () => {
     try {
-        console.log('Reading schema.sql...');
+        console.log('[PostgreSQL] Initializing schema...');
         const schema = fs.readFileSync(path.join(__dirname, '../schema.sql'), 'utf8');
-        
-        console.log('Executing schema in PostgreSQL...');
         await pool.query(schema);
-        
-        console.log('✅ Database tables initialized successfully.');
-        process.exit(0);
+        console.log('✅ PostgreSQL Tables Ready.');
+        return true;
     } catch (err) {
-        console.error('❌ Error initializing database:', err.message);
-        console.log('\nNote: Make sure your PostgreSQL server is running and the DATABASE_URL in .env is correct.');
-        process.exit(1);
+        console.error('❌ PostgreSQL Init Error:', err.message);
+        // Only exit if DATABASE_URL was explicitly provided and failed
+        if (process.env.DATABASE_URL) {
+            console.log('\nNote: Check your PostgreSQL service and DATABASE_URL.');
+        } else {
+            console.log('[PG Fallback] Continuing without PostgreSQL. Some features may be disabled.');
+        }
+        return false;
     }
 };
 
-initializeDatabase();
+if (require.main === module) {
+    initializeDatabase().then(() => process.exit(0)).catch(() => process.exit(1));
+}
+
+module.exports = { initializeDatabase };

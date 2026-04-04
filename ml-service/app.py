@@ -32,24 +32,24 @@ def predict_risk():
         predicted_earnings = float(model.predict(features)[0])
         
         # Risk Logic
-        # If predicted_earnings < 400 → HIGH RISK → payout ₹300
-        # If predicted_earnings between 400 and 700 → MEDIUM RISK → payout ₹150
-        # If predicted_earnings > 700 → LOW RISK → no payout
+        baseline = 800
+        loss_percentage = round(max(0, (1 - predicted_earnings / baseline) * 100), 2)
         
         risk_level = "LOW"
         payout_amount = 0
         
-        if predicted_earnings < 400:
+        if loss_percentage > 40:
             risk_level = "HIGH"
             payout_amount = 300
-        elif 400 <= predicted_earnings <= 600:
+        elif loss_percentage > 20:
             risk_level = "MEDIUM"
             payout_amount = 150
             
         return jsonify({
             "predicted_earnings": round(predicted_earnings, 2),
-            "risk_level": "LOW" if predicted_earnings > 600 else risk_level,
-            "recommended_payout": 0 if predicted_earnings > 600 else payout_amount
+            "loss_percentage": loss_percentage,
+            "risk_level": risk_level,
+            "recommended_payout": payout_amount
         })
         
     except Exception as e:

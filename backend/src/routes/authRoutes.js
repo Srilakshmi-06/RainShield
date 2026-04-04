@@ -1,107 +1,164 @@
 const express = require('express');
 const router = express.Router();
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
+const { User } = require('../models');
+const PolicyService = require('../services/policyService');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'rainshield_secret_key';
 
 // Mock OTP storage
 const otpStore = {};
 
+// Helper: Risk Logic (Simplified ML Simulation)
+const calculateInitialRisk = (hours, wetWork) => {
+    let score = 20; // Baseline
+    if (hours > 8) score += 30; // High exposure
+    if (wetWork) score += 40; // Rain exposure
+    return Math.min(score, 100);
+};
+
+const suggestTier = (riskScore) => {
+    if (riskScore >= 70) return 'premium';
+    if (riskScore >= 40) return 'standard';
+    return 'basic';
+};
+
+// 1. Send OTP (Simulated - for the initial phone verification step)
 router.post('/send-otp', (req, res) => {
     const { phone } = req.body;
     if (!phone) return res.status(400).json({ error: 'Phone number is required' });
 
-    // Generate a 6-digit OTP
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     otpStore[phone] = otp;
 
-    // Log to console for demo
-    console.log(`\n-----------------------------------------`);
-    console.log(`[AUTH SERVICE] VERIFICATION OTP: ${otp}`);
-    console.log(`[AUTH SERVICE] FOR PHONE: ${phone}`);
-    console.log(`-----------------------------------------\n`);
+    console.log(`\n[AUTH SERVICE] VERIFICATION OTP for ${phone}: ${otp}\n`);
 
     res.json({ 
-        message: 'Demo Mode: OTP sent! Check the backend terminal/console.', 
+        message: 'OTP sent! Use this to verify your phone number.', 
         debugOtp: otp,
-        status: 'mock'
+        status: 'mock_sent'
     });
 });
 
+// 2. Verify OTP
 router.post('/verify-otp', (req, res) => {
     const { phone, otp } = req.body;
     
-    // Master Bypass for Demo (000000)
-    if (otp === '000000') {
-        return res.json({ success: true, message: 'OTP verified (Master Bypass)' });
-    }
-
-    if (otpStore[phone] && otpStore[phone] === otp) {
-        delete otpStore[phone]; // Clear after use
-        return res.json({ success: true, message: 'OTP verified' });
+    // Bypass for demo (000000)
+    if (otp === '000000' || (otpStore[phone] && otpStore[phone] === otp)) {
+        delete otpStore[phone];
+        const tempToken = jwt.sign({ phone, authenticated: true }, JWT_SECRET, { expiresIn: '15m' });
+        return res.json({ success: true, tempToken, message: 'OTP verified' });
     }
     
     res.status(400).json({ success: false, error: 'Invalid or expired OTP' });
 });
 
-const { User } = require('../models');
-
+// 3. Signup / Advanced Onboarding (With Password)
 router.post('/signup', async (req, res) => {
-    try {
-        const { phone, name, city, platform, avgDailyEarnings, tier } = req.body;
-        
-        if(!phone || !name) {
-            return res.status(400).json({ error: 'Phone and Name are required' });
-        }
+    const { 
+        phone, password, name, age, city, platform, vehicleType, 
+        workingHours, preferredZones, wetWork, tier 
+    } = req.body;
 
-        // Check if user already exists
+    try {
+        // Validate if user already exists
         let user = await User.findOne({ phone });
         if (user) {
             return res.status(400).json({ error: 'User already registered. Please login.' });
         }
 
+        if (!password) {
+            return res.status(400).json({ error: 'Password is required' });
+        }
+
+        // --- Logic-based AI features for initial profile ---
+        const riskScore = calculateInitialRisk(parseInt(workingHours), wetWork);
+        const autoSuggestedTier = suggestTier(riskScore);
+        const finalTier = tier || autoSuggestedTier;
+
+        // Hash password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Save to MongoDB
         user = new User({
             phone,
+            password: hashedPassword,
             name,
+            age: parseInt(age),
             city,
             platform,
-            avgDailyEarnings,
-            tier: tier || 'standard',
-            role: phone === '999' ? 'admin' : 'worker' // Demo override
+            vehicleType,
+            workingHours: parseInt(workingHours),
+            preferredZones,
+            riskScore,
+            tier: finalTier,
+            verificationStatus: 'verified', // Auto-verify for demo
+            documentsLinked: false,
+            role: phone === '999' ? 'admin' : 'worker'
         });
 
         await user.save();
         console.log(`[DB] NEW USER REGISTERED: ${name} (${phone})`);
+        
+        // Activate initial policy in MongoDB
+        await PolicyService.createInitialPolicy(phone, finalTier);
 
-        res.status(201).json({ 
-            message: 'Worker registered successfully in MongoDB',
-            user: user
+        const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+
+        res.status(201).json({
+            message: 'Worker Onboarding Completed!',
+            user: { ...user._doc, password: '' }, // Don't return password
+            token,
+            riskSummary: {
+                score: riskScore,
+                recommendedTier: autoSuggestedTier
+            }
         });
     } catch (err) {
+        console.error('Signup Error:', err.message);
         res.status(500).json({ error: 'Database Error: ' + err.message });
     }
 });
 
+// 4. Secure Login (Password-based)
 router.post('/login', async (req, res) => {
+    const { phone, password } = req.body;
+    
     try {
-        const { phone, password } = req.body;
-        
-        // Demo Master Password or Phone match
-        let user = await User.findOne({ phone });
-        
-        if (!user && phone === '999' && password === 'admin') {
-            // Auto-create admin if missing
-            user = new User({ phone: '999', name: 'System Admin', role: 'admin' });
-            await user.save();
-        }
+        const user = await User.findOne({ phone });
 
         if (!user) {
-            return res.status(404).json({ error: 'User not found. Please sign up.' });
+            return res.status(404).json({ error: 'Worker not found. Please sign up.' });
         }
 
-        res.json({ 
-            message: 'Login successful',
-            user: user
-        });
+        // Admin Master Bypass for Demo
+        if (phone === '999' && password === 'admin') {
+            const token = jwt.sign({ userId: user._id, role: 'admin' }, JWT_SECRET, { expiresIn: '7d' });
+            return res.json({ message: 'Admin Login successful', user, token });
+        }
+
+        // Verify password
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(400).json({ error: 'Invalid credentials' });
+        }
+
+        // Trigger initial policy activation if none exists (Safety check for legacy users)
+        const activePolicies = await PolicyService.getUserPolicies(phone);
+        if (activePolicies.length === 0) {
+            console.log(`[AUTH] Activating fallback policy for existing user: ${phone}`);
+            await PolicyService.createInitialPolicy(phone, user.tier || 'standard');
+        }
+
+        const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, { expiresIn: '7d' });
+        res.json({ message: 'Login successful', user: { ...user._doc, password: '' }, token });
+
     } catch (err) {
-        res.status(500).json({ error: 'Login Error' });
+        console.error('Login Error:', err.message);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
