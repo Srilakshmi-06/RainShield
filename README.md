@@ -83,12 +83,13 @@ To protect honest workers during network drops:
 
 ---
 
-##  6. Advanced Intelligent Features (New)
-RainShield has evolved into a fully automated, zero-touch ecosystem:
--   **Intelligent Dynamic Premium:** Premiums now adjust in real-time based on **Environmental Load** (Live Weather), **Activity Load** (Working Hours), and **ML Risk** (Predicted Earnings). Users see a transparent breakdown of why their price changed.
--   **Zero-Touch Claims Management:** The system proactively detects risk events (e.g., heavy rain) and pushes **Pre-filled Claims** to the user. Workers can file a claim with a **single click**, eliminating manual evidence collection.
--   **AI Validation Layer:** Low-risk, weather-verified claims are auto-approved in seconds. A built-in fraud detection layer monitors frequency and zone-activity to protect the liquidity pool.
--   **Historical Audit Tracker:** Every premium change and claim stage (Pending → Approved → Processed) is recorded in a permanent audit layer for full transparency.
+##  6. Core Platform Features
+The RainShield platform is built around four intelligent pillars designed for the gig economy:
+
+1. **Insurance Policy Management**: A robust, multi-tier policy system (Basic, Standard, Premium) that allows users to manage coverage limits, track active protection cycles, and view historical premium audit logs through a premium dashboard.
+2. **Dynamic Premium Calculation**: An AI-integrated pricing engine that adjusts premiums in real-time based on environmental risk (weather API), worker activity logs, and ML-based income-loss predictions.
+3. **Registration Process**: A frictionless, multi-step onboarding system utilizing phone-number authentication and geolocation to automatically sync workers with their local risk zones for accurate parametric triggers.
+4. **Zero-Touch Claims Management**: A proactive claims system that detects risk events automatically. It pre-fills claims for users and offers a one-click submission experience with real-time status tracking (Pending → Approved → Processed).
 
 ---
 
