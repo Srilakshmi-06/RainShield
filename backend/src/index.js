@@ -10,9 +10,6 @@ const app = express();
 const connectDB = require('./db');
 const server = http.createServer(app);
 
-// Connect to MongoDB
-connectDB();
-
 const io = new Server(server, {
   cors: {
     origin: "*", // Allow all origins for deployment
@@ -156,7 +153,17 @@ const PORT = process.env.PORT || 5000;
 
 const { initAutomation } = require('./services/automationService');
 
-server.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-  initAutomation();
-});
+// Connect to MongoDB & Start Server
+const startServer = async () => {
+    try {
+        await connectDB();
+        server.listen(PORT, () => {
+            console.log(`Server listening on port ${PORT}`);
+            initAutomation();
+        });
+    } catch (err) {
+        console.error('Failed to start server:', err.message);
+    }
+};
+
+startServer();
