@@ -54,6 +54,7 @@ io.on('connection', (socket) => {
   // Handle user's specific city
   socket.on('joinZone', async (city) => {
     console.log(`User joined monitoring for city: ${city}`);
+    socket.join(city); // Add user to city-specific room for simulation updates
     
     // Clear existing interval if any to prevent leaks
     if (socket.weatherInterval) clearInterval(socket.weatherInterval);
