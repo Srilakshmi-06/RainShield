@@ -12,13 +12,17 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow all origins for deployment
-    methods: ["GET", "POST"]
+    origin: ["https://rainshield.netlify.app", "http://localhost:5173", "http://127.0.0.1:5173"],
+    methods: ["GET", "POST"],
+    credentials: true
   }
 });
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ["https://rainshield.netlify.app", "http://localhost:5173", "http://127.0.0.1:5173"],
+  credentials: true
+}));
 app.use(express.json());
 
 const authRoutes = require('./routes/authRoutes');
