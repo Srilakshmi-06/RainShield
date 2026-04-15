@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const { getIo } = require('../socket');
 
 /**
  * DEBUG: Inject fake weather data for demo purposes
