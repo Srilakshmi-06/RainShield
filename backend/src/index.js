@@ -43,6 +43,7 @@ app.use('/api/policies', policyRoutes);
 app.use('/api/claims', claimRoutes);
 app.use('/api/chat', require('./routes/chatRoutes'));
 app.use('/api/simulate', require('./routes/simulationRoutes'));
+app.use('/api/admin', require('./routes/adminRoutes'));
 
 const axios = require('axios');
 

@@ -11,6 +11,27 @@ import BACKEND_URL from '../config.js';
 const socket = io(BACKEND_URL);
 
 const AdminDash = ({ onLogout }) => {
+  const [stats, setStats] = useState(null);
+  const [recentClaims, setRecentClaims] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const fetchStats = async () => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/admin/stats`);
+      const data = await res.json();
+      if (data.success) {
+        setStats(data.stats);
+        setRecentClaims(data.recentActivity);
+      }
+    } catch (e) { console.error(e); }
+    finally { setLoading(false); }
+  };
+
+  useEffect(() => {
+    fetchStats();
+    const interval = setInterval(fetchStats, 30000); // Refresh every 30s
+    return () => clearInterval(interval);
+  }, []);
   const [monitorData, setMonitorData] = useState(null);
   const [activeTriggers, setActiveTriggers] = useState([]);
 
@@ -66,33 +87,32 @@ const AdminDash = ({ onLogout }) => {
 
       {/* Summary Stats */}
       <div className="metrics-grid">
-        <div className="metric-card glass-panel" style={{ borderTop: '4px solid var(--primary)' }}>
-          <div className="metric-icon-wrapper blue">
-            <Users className="metric-icon" />
-          </div>
+        <div className="metric-card glass-panel flex-row">
+          <Users className="text-blue-400" size={24} />
           <div>
-            <p className="metric-label">Total Workers</p>
-            <h3 className="metric-value">8,452</h3>
+            <p className="text-xs text-muted uppercase font-bold">Total Workers</p>
+            <h2 className="text-2xl font-black">{loading ? '...' : stats?.totalWorkers || 0}</h2>
           </div>
         </div>
-
-        <div className="metric-card glass-panel" style={{ borderTop: '4px solid var(--accent)' }}>
-          <div className="metric-icon-wrapper orange">
-            <AlertTriangle className="metric-icon" />
-          </div>
+        <div className="metric-card glass-panel flex-row">
+          <AlertTriangle className="text-orange-400" size={24} />
           <div>
-            <p className="metric-label">Active Triggers</p>
-            <h3 className="metric-value">{activeTriggers.length} Zones</h3>
+            <p className="text-xs text-muted uppercase font-bold">Total Claims</p>
+            <h2 className="text-2xl font-black">{loading ? '...' : stats?.totalClaims || 0}</h2>
           </div>
         </div>
-
-        <div className="metric-card glass-panel" style={{ borderTop: '4px solid var(--secondary)' }}>
-          <div className="metric-icon-wrapper green">
-            <ShieldCheck className="metric-icon" />
-          </div>
+        <div className="metric-card glass-panel flex-row">
+          <CheckSquare className="text-emerald-400" size={24} />
           <div>
-            <p className="metric-label">Weekly Loss Ratio</p>
-            <h3 className="metric-value">12.4%</h3>
+            <p className="text-xs text-muted uppercase font-bold">Active Policies</p>
+            <h2 className="text-2xl font-black">{loading ? '...' : stats?.activePolicies || 0}</h2>
+          </div>
+        </div>
+        <div className="metric-card glass-panel flex-row">
+          <Activity className="text-purple-400" size={24} />
+          <div>
+            <p className="text-xs text-muted uppercase font-bold">Total Payouts</p>
+            <h2 className="text-2xl font-black">₹{loading ? '...' : stats?.totalPayoutAmount?.toLocaleString() || 0}</h2>
           </div>
         </div>
       </div>
@@ -222,26 +242,24 @@ const AdminDash = ({ onLogout }) => {
              <h3>Live Payout Feed</h3>
              <span className="text-[10px] text-primary font-bold">SECURED BY MTS+</span>
           </div>
-          <div className="timeline mt-6">
-            {activeTriggers.length > 0 ? activeTriggers.map((t, i) => (
-              <div key={i} className="timeline-item">
-                <div className="timeline-icon bg-green"><ShieldCheck size={16} /></div>
-                <div className="timeline-content">
-                  <div className="flex-between">
-                    <h4>{t.amount} Distributed</h4>
-                    <span className="text-[8px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/20">VERIFIED</span>
+            <div className="feed-items mt-6">
+              {recentClaims.map((claim, idx) => (
+                <div key={idx} className="timeline-item">
+                  <div className={`timeline-icon ${claim.status === 'Processed' ? 'bg-green' : 'bg-red'}`}>
+                    {claim.status === 'Processed' ? <ShieldCheck size={16} /> : <AlertTriangle size={16} />}
                   </div>
-                  <p>Trigger: {t.city} • {t.reason}</p>
-                  <span className="time-text">{t.time}</span>
+                  <div className="timeline-content">
+                    <h4 className="text-sm font-bold">{claim.userId?.name || 'Unknown Worker'}</h4>
+                    <p className="text-xs text-soft">{claim.description || 'Rainfall Claim'}</p>
+                    <div className="flex-between mt-1">
+                       <span className={`status-pill ${claim.status.toLowerCase()}`}>{claim.status}</span>
+                       <span className="text-[10px] font-black text-primary">₹{claim.amount}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            )) : (
-              <div className="text-center py-10 opacity-50">
-                <Activity size={32} className="mb-2" />
-                <p>Waiting for parametric triggers...</p>
-              </div>
-            )}
-          </div>
+              ))}
+              {recentClaims.length === 0 && <p className="text-center text-muted text-xs p-4">No recent activity detected.</p>}
+            </div>
         </div>
 
         {/* Loss Ratio Analytics Chart */}
