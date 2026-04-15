@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import './ChatWidget.css';
+import BACKEND_URL from '../config.js';
 
 const ChatWidget = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -36,7 +37,7 @@ const ChatWidget = () => {
 
         try {
             const shieldUser = JSON.parse(localStorage.getItem('shield_user') || '{}');
-            const response = await axios.post('http://localhost:5000/api/chat/message', {
+            const response = await axios.post(`${BACKEND_URL}/api/chat/message`, {
                 sender: 'user-' + (shieldUser._id || 'guest'),
                 message: inputText,
                 userContext: {
