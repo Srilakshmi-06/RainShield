@@ -11,36 +11,45 @@ class PaymentService {
     }
 
     /**
-     * Trigger a Payout (Parametric Settlement)
+     * Trigger a Payout (Parametric Settlement via UPI)
      */
     async processPayout(claimId) {
-        console.log(`[PAYMENT] Starting payout processing for claim: ${claimId}`);
+        console.log(`[PAYMENT] Starting UPI payout processing for claim: ${claimId}`);
         
         try {
             const claim = await Claim.findById(claimId).populate('userId');
             if (!claim) throw new Error('Claim not found');
 
             const user = claim.userId;
+            const upiHandle = user.phone + '@okaxis'; // Simulated UPI ID
             
-            // 1. Mark as Pending
+            // 1. Mark as Pending & Validate UPI
             claim.payoutStatus = 'Pending';
-            claim.timeline.push({ status: 'Processing Payout', comment: 'Initiating transfer via Razorpay Sandbox' });
+            claim.timeline.push({ 
+                status: 'Processing UPI', 
+                comment: `Validating VPA: ${upiHandle} via NPCI sandbox...` 
+            });
             await claim.save();
 
-            // 2. Simulate Razorpay/Stripe API Call
-            // For hackathon/demo purposes, we simulate a successful transaction 90% of the time
-            const isSimulationSuccess = Math.random() < 0.9;
+            // 2. Simulate Delay for Gateway response
+            await new Promise(r => setTimeout(r, 1500)); // Realism
+
+            // 3. Simulate Razorpay/UPI Gateway API Call
+            const isSimulationSuccess = Math.random() < 0.95; // High success rate for UPI
             
             if (isSimulationSuccess) {
-                const payoutId = 'pay_' + Math.random().toString(36).substr(2, 9);
+                const payoutId = 'upi_txn_' + Math.random().toString(36).substr(2, 12).toUpperCase();
                 
-                // 3. Update Domain Models
+                // 4. Update Domain Models
                 claim.payoutStatus = 'Success';
                 claim.payoutId = payoutId;
                 claim.status = 'Processed';
-                claim.timeline.push({ status: 'Payout Success', comment: `Transferred ₹${claim.amount} to worker's wallet.` });
+                claim.timeline.push({ 
+                    status: 'UPI Payout Success', 
+                    comment: `Sent ₹${claim.amount} to UPI ID: ${upiHandle}. Txn ID: ${payoutId}` 
+                });
                 
-                // Update Wallet Balance
+                // Update Wallet Balance (for local tracking)
                 user.walletBalance += claim.amount;
                 await user.save();
                 
@@ -49,22 +58,25 @@ class PaymentService {
                     userId: user._id,
                     amount: claim.amount,
                     city: user.city,
-                    reason: `Weather Loss Payout: ${claim.description}`,
+                    reason: `UPI Parametric Pay: ${claim.description}`,
                     payoutId: payoutId
                 }).save();
 
                 await claim.save();
 
-                console.log(`✅ [PAYMENT SUCCESS] Worker ${user.phone} received ₹${claim.amount}`);
-                return { success: true, payoutId };
+                console.log(`✅ [UPI SUCCESS] Worker ${user.phone} received ₹${claim.amount} via UPI`);
+                return { success: true, payoutId, upi: upiHandle };
             } else {
-                // 4. Handle Failure & Retries
+                // 5. Handle Failure (Simulate NPCI reject)
                 claim.payoutStatus = 'Failed';
-                claim.timeline.push({ status: 'Payout Failed', comment: 'Bank gateway timeout. Will retry in 10 minutes.' });
+                claim.timeline.push({ 
+                    status: 'UPI Failed', 
+                    comment: 'NPCI: Insufficient Balance in Escrow or VPA Not Reachable.' 
+                });
                 await claim.save();
                 
-                console.error(`❌ [PAYMENT FAILED] Payout for claim ${claimId} failed simulation.`);
-                return { success: false, error: 'Simulation Failure' };
+                console.error(`❌ [UPI FAILED] Payout for claim ${claimId} failed simulation.`);
+                return { success: false, error: 'UPI Sandbox Failure' };
             }
         } catch (err) {
             console.error('[PAYMENT ERROR]', err.message);

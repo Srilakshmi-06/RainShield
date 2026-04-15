@@ -433,6 +433,81 @@
   .dashboard-top-bar { padding: 0 1rem; }
 }
 
-@media (max-width: 480px) {
-  .metrics-grid { grid-template-columns: 1fr; }
+/* ── UPI Simulation Modal ── */
+.upi-simulation-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(12px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
 }
+
+.upi-modal {
+  width: 100%;
+  max-width: 400px;
+  background: linear-gradient(135deg, #0a0f1d 0%, #060b14 100%);
+  border: 1px solid rgba(16,185,129,0.2);
+  padding: 2.5rem;
+  border-radius: 28px;
+  box-shadow: 0 40px 100px rgba(0,0,0,0.8), 0 0 60px rgba(16,185,129,0.1);
+  position: relative;
+}
+
+.upi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding-bottom: 1rem;
+}
+
+.upi-logo { font-weight: 900; color: #fff; font-size: 1.25rem; }
+.bank-logo { font-size: 0.65rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; }
+
+.upi-success-orb {
+  width: 100px; height: 100px;
+  margin: 0 auto 1.5rem;
+  background: rgba(16,185,129,0.1);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.upi-amount-row h2 { font-size: 3rem; font-weight: 900; margin-bottom: 0.25rem; }
+.upi-amount-row p { font-size: 0.875rem; color: var(--primary); font-weight: 700; text-transform: uppercase; }
+
+.upi-details-grid {
+  margin-top: 2.5rem;
+  padding: 1.5rem;
+  background: rgba(255,255,255,0.02);
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.05);
+}
+
+.detail-item {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.detail-item:last-child { margin-bottom: 0; }
+.detail-item span { font-size: 0.75rem; color: var(--text-muted); }
+.detail-item strong { font-size: 0.8rem; }
+
+.upi-close-btn {
+  width: 100%;
+  margin-top: 2rem;
+  padding: 1rem;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.upi-close-btn:hover { background: #059669; transform: translateY(-2px); }
+

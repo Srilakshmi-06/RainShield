@@ -29,6 +29,7 @@ const Dashboard = ({ user, onLogout }) => {
   const [isSubmittingClaim, setIsSubmittingClaim] = useState(false);
   const [activeView, setActiveView] = useState('overview'); // 'overview', 'policy', 'profile'
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showUpiModal, setShowUpiModal] = useState(null); // { amount, txId, vpa }
 
   const fetchClaims = async () => {
     try {
@@ -86,15 +87,25 @@ const Dashboard = ({ user, onLogout }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: user?._id || user?.id,
+          phone: user?.phone,
           type: alert.type,
           description: alert.message,
-          amount: data?.prediction?.payoutAmount || 500,
+          amount: data?.prediction?.payoutAmount || 300,
           alertId: alert.id
         })
       });
       const result = await response.json();
       if (result.success) {
-        alert('Claim submitted successfully!');
+        // If it was auto-approved and paid, show the simulation
+        if (result.claim.payoutStatus === 'Success') {
+           setShowUpiModal({ 
+             amount: result.claim.amount, 
+             txId: result.claim.payoutId,
+             vpa: (user?.phone || '999') + '@okaxis'
+           });
+        } else {
+           alert('Claim submitted! Under AI review.');
+        }
         fetchClaims();
         setAlerts(prev => prev.filter(a => a.id !== alert.id));
       }
@@ -471,6 +482,48 @@ const Dashboard = ({ user, onLogout }) => {
           </AnimatePresence>
         </div>
       </main>
+
+      {/* UPI Simulation Modal */}
+      <AnimatePresence>
+        {showUpiModal && (
+          <div className="upi-simulation-overlay" onClick={() => setShowUpiModal(null)}>
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="upi-modal glass-panel"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="upi-header">
+                <div className="upi-logo">UPI</div>
+                <div className="bank-logo">NPCI Parametric Gateway</div>
+              </div>
+              
+              <div className="upi-success-orb">
+                <CheckCircle size={48} className="text-primary animate-bounce" />
+              </div>
+
+              <div className="upi-amount-row text-center">
+                <h2>₹{showUpiModal.amount}</h2>
+                <p>Transfer Successful</p>
+              </div>
+
+              <div className="upi-details-grid">
+                <div className="detail-item">
+                  <span>To:</span>
+                  <strong>{showUpiModal.vpa}</strong>
+                </div>
+                <div className="detail-item">
+                  <span>Txn ID:</span>
+                  <strong className="text-[10px] break-all">{showUpiModal.txId}</strong>
+                </div>
+              </div>
+
+              <button className="upi-close-btn" onClick={() => setShowUpiModal(null)}>Back to Hub</button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
