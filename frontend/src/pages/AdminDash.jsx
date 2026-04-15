@@ -155,6 +155,65 @@ const AdminDash = ({ onLogout }) => {
               <div className="progress" style={{ width: '85%', height: '100%', background: 'var(--primary)' }}></div>
             </div>
           </div>
+
+          {/* New Simulation Control Panel */}
+          <div className="simulation-controls mt-8 p-6 glass-panel border border-primary/20 bg-primary/5">
+            <h4 className="text-sm font-black uppercase tracking-widest text-primary mb-4">Emergency Simulation Controls</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <input 
+                id="sim-city"
+                type="text" 
+                placeholder="City (e.g. Mumbai)" 
+                className="input-field text-xs" 
+                defaultValue="Mumbai"
+              />
+              <input 
+                id="sim-rain"
+                type="number" 
+                placeholder="Rain (mm)" 
+                className="input-field text-xs"
+                defaultValue="15"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button 
+                onClick={async () => {
+                  const city = document.getElementById('sim-city').value;
+                  const rain = document.getElementById('sim-rain').value;
+                  try {
+                    const res = await fetch(`${BACKEND_URL}/api/simulate/weather`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ city, rainfall: parseFloat(rain), riskLevel: 'High' })
+                    });
+                    if (res.ok) alert(`Risk Event Injected!`);
+                  } catch (e) { console.error(e); }
+                }}
+                className="btn btn-primary flex-1 text-[10px] uppercase font-black"
+                style={{ padding: '0.75rem' }}
+              >
+                Inject Risk
+              </button>
+              <button 
+                onClick={async () => {
+                  const city = document.getElementById('sim-city').value;
+                  try {
+                    await fetch(`${BACKEND_URL}/api/simulate/weather`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ city, rainfall: 0, description: 'Clear Skies', riskLevel: 'Normal' })
+                    });
+                    alert(`Simulation Cleared for ${city}`);
+                  } catch (e) { console.error(e); }
+                }}
+                className="btn btn-secondary flex-1 text-[10px] uppercase font-black"
+                style={{ padding: '0.75rem' }}
+              >
+                Clear
+              </button>
+            </div>
+            <p className="text-[9px] text-muted mt-2 italic text-center">Bypasses OpenWeather API for real-time parametric testing</p>
+          </div>
         </div>
 
         {/* Real-time Activity Feed */}

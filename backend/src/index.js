@@ -18,6 +18,8 @@ const io = new Server(server, {
   }
 });
 
+app.set('socketio', io); // Share socket instance with routes
+
 // Middleware
 app.use(cors({
   origin: ["https://rainshield.netlify.app", "http://localhost:5173", "http://127.0.0.1:5173"],
@@ -40,6 +42,7 @@ app.use('/api/payout', payoutRoutes);
 app.use('/api/policies', policyRoutes);
 app.use('/api/claims', claimRoutes);
 app.use('/api/chat', require('./routes/chatRoutes'));
+app.use('/api/simulate', require('./routes/simulationRoutes'));
 
 const axios = require('axios');
 
