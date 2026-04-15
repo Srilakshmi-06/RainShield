@@ -16,7 +16,7 @@ router.get('/:phone', async (req, res) => {
 router.post('/one-click', async (req, res) => {
     const { userId, policyId, prefilled } = req.body;
     try {
-        const claim = await ClaimService.submitOneClickClaim({ userId, policyId, prefilled });
+        const claim = await ClaimService.submitOneClickClaim({ userId, policyId, prefilled }, req);
         res.json({ success: true, claim, message: claim.isAutoApproved ? 'Claim Auto-Approved!' : 'Claim under AI review.' });
     } catch (err) {
         res.status(500).json({ error: 'Submission failed' });

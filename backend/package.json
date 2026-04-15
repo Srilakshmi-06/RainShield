@@ -22,8 +22,10 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.3.0",
     "openai": "^6.34.0",
+    "razorpay": "^2.9.6",
     "socket.io": "^4.8.3",
-    "twilio": "^5.13.0"
+    "twilio": "^5.13.0",
+    "ua-parser-js": "^2.0.9"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

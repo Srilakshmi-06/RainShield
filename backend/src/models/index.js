@@ -16,6 +16,9 @@ const userSchema = new mongoose.Schema({
     verificationStatus: { type: String, default: 'unverified' },
     documentsLinked: { type: Boolean, default: false },
     role: { type: String, enum: ['worker', 'admin'], default: 'worker' },
+    walletBalance: { type: Number, default: 0 },
+    trustScore: { type: Number, default: 100 },
+    lastFingerprint: { type: String },
     createdAt: { type: Date, default: Date.now }
 });
 
@@ -100,6 +103,14 @@ const claimSchema = new mongoose.Schema({
     ],
     isAutoApproved: { type: Boolean, default: false },
     fraudFlags: [String],
+    fraudScore: { type: Number, default: 0 }, // 0-100 probability
+    payoutStatus: { 
+        type: String, 
+        enum: ['None', 'Pending', 'Success', 'Failed'], 
+        default: 'None' 
+    },
+    payoutId: { type: String },
+    deviceFingerprint: { type: String },
     submittedAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });

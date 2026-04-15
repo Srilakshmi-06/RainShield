@@ -7,6 +7,9 @@ import {
   ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { io } from 'socket.io-client';
+import { 
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer 
+} from 'recharts';
 import './Dashboard.css';
 
 import RiskHeatmap from '../components/RiskHeatmap';
@@ -220,6 +223,12 @@ const Dashboard = ({ user, onLogout }) => {
           </div>
 
           <div className="flex items-center gap-6 glass-panel px-6 py-2 border border-white/5">
+            {/* 0. Wallet Balance (New) */}
+            <div className="hidden md:flex flex-col items-end pr-6 border-r border-white/10">
+              <span className="text-[9px] text-muted font-black uppercase tracking-widest mb-0.5">My Wallet</span>
+              <span className="text-sm font-black text-primary">₹{(user?.walletBalance || 0).toLocaleString()}</span>
+            </div>
+
             {/* 1. Notification Icon */}
             <div className="relative group/bell pr-6 border-r border-white/10">
               <Bell size={18} className="text-muted group-hover/bell:text-white transition-colors cursor-pointer" />
@@ -333,6 +342,46 @@ const Dashboard = ({ user, onLogout }) => {
                 )}
 
                 <div className="dashboard-main-grid grid-2">
+                  {/* Earnings Protection Chart */}
+                  <div className="main-card glass-panel lg:col-span-2">
+                    <div className="flex-between mb-6">
+                      <div>
+                        <h3 className="text-lg font-black">Earnings Protection Shield</h3>
+                        <p className="text-[10px] text-muted font-bold uppercase">Weekly actual earnings + RainShield automatic payouts</p>
+                      </div>
+                      <div className="flex gap-4">
+                         <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-slate-600"></span>
+                            <span className="text-[10px] font-bold">Base Earnings</span>
+                         </div>
+                         <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                            <span className="text-[10px] font-bold">With RainShield</span>
+                         </div>
+                      </div>
+                    </div>
+                    <div style={{ width: '100%', height: 250 }}>
+                      <ResponsiveContainer>
+                        <AreaChart
+                          data={activity.slice(0, 7).reverse().map((a, i) => ({
+                            name: `Day ${i+1}`,
+                            base: user?.avgDailyEarnings || 800,
+                            protected: (user?.avgDailyEarnings || 800) + (a.payoutAmount || 0)
+                          }))}
+                        >
+                          <XAxis dataKey="name" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                          <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} axisLine={false} />
+                          <Tooltip 
+                            contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px' }}
+                            itemStyle={{ fontSize: '11px', fontWeight: 'bold' }}
+                          />
+                          <Area type="monotone" dataKey="base" stroke="#475569" fill="transparent" strokeWidth={2} dot={false} />
+                          <Area type="monotone" dataKey="protected" stroke="#10b981" fillOpacity={0.3} fill="#10b981" strokeWidth={3} />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </div>
+                  </div>
+
                   {/* Heatmap */}
                   <div className="main-card glass-panel lg:col-span-2">
                     <div className="flex-between mb-4">

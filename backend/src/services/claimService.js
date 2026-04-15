@@ -1,4 +1,6 @@
 const { Claim, User, Policy, RiskAlert } = require('../models');
+const FraudService = require('./fraudService');
+const PaymentService = require('./paymentService');
 
 const ClaimService = {
     /**
@@ -43,20 +45,14 @@ const ClaimService = {
     /**
      * One-click submission & Auto-validation
      */
-    async submitOneClickClaim(claimData) {
+    async submitOneClickClaim(claimData, req) {
         try {
             const { userId, policyId, prefilled } = claimData;
 
-            // Basic Fraud Check: Prevent too many claims in a short burst
-            const todayClaims = await Claim.countDocuments({
-                userId,
-                submittedAt: { $gte: new Date(new Date().setHours(0,0,0,0)) }
-            });
-
-            const fraudFlags = [];
-            if (todayClaims >= 2) fraudFlags.push('High frequency activity');
+            // 1. ADVANCED FRAUD DETECTION (MTS+)
+            const fraudResult = await FraudService.calculateFraudScore(userId, prefilled, req);
             
-            const isAutoApprovable = (prefilled.amount <= 300 && fraudFlags.length === 0);
+            const isAutoApprovable = (prefilled.amount <= 300 && fraudResult.score < 30);
 
             const newClaim = new Claim({
                 userId,
@@ -64,7 +60,9 @@ const ClaimService = {
                 ...prefilled,
                 status: isAutoApprovable ? 'Approved' : 'Under Review',
                 isAutoApproved: isAutoApprovable,
-                fraudFlags,
+                fraudFlags: fraudResult.flags,
+                fraudScore: fraudResult.score,
+                deviceFingerprint: fraudResult.fingerprint,
                 timeline: [
                     { status: 'Pending', comment: 'Claim submitted via one-click detection.' }
                 ]
@@ -72,7 +70,14 @@ const ClaimService = {
 
             if (isAutoApprovable) {
                 newClaim.timeline.push({ status: 'Approved', comment: 'AI Validation passed based on real-time weather & risk model.' });
-                // We could even set it to 'Processed' if payment was instant
+                
+                // 2. INSTANT PAYOUT SYSTEM
+                // We fire and forget or await depending on flow. For demo, we await.
+                await newClaim.save(); // Save first to get ID
+                await PaymentService.processPayout(newClaim._id);
+                
+                // Reload claim to get updated status/payoutId
+                return await Claim.findById(newClaim._id);
             }
 
             await newClaim.save();
@@ -97,6 +102,13 @@ const ClaimService = {
         claim.timeline.push({ status, comment });
         claim.updatedAt = new Date();
         await claim.save();
+
+        // Trigger payout if manually approved by Admin
+        if (status === 'Approved' && claim.payoutStatus === 'None') {
+            await PaymentService.processPayout(claimId);
+            return await Claim.findById(claimId);
+        }
+
         return claim;
     }
 };

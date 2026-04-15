@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Users, AlertTriangle, CheckSquare, Activity, ShieldCheck, LogOut } from 'lucide-react';
 import { io } from 'socket.io-client';
+import { 
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer 
+} from 'recharts';
 import './Dashboard.css'; // Reusing dashboard styles
 import BACKEND_URL from '../config.js';
 
@@ -109,7 +112,7 @@ const AdminDash = ({ onLogout }) => {
                 <th style={{ padding: '0.8rem 0', color: 'var(--text-muted)' }}>City/Area</th>
                 <th style={{ padding: '0.8rem 0', color: 'var(--text-muted)' }}>Condition</th>
                 <th style={{ padding: '0.8rem 0', color: 'var(--text-muted)' }}>Rain</th>
-                <th style={{ padding: '0.8rem 0', color: 'var(--text-muted)' }}>Workers</th>
+                <th style={{ padding: '0.8rem 0', color: 'var(--text-muted)' }}>Fraud Prob</th>
               </tr>
             </thead>
             <tbody>
@@ -121,7 +124,12 @@ const AdminDash = ({ onLogout }) => {
                   </span>
                 </td>
                 <td><strong>{monitorData?.conditions?.rainfall || '0 mm'}</strong></td>
-                <td>{monitorData?.affectedWorkersEst || '0'}</td>
+                <td>
+                   <div className="flex items-center gap-2">
+                       <span className={`w-2 h-2 rounded-full ${monitorData?.conditions?.riskLevel === 'High' ? 'bg-orange-500' : 'bg-emerald-500'}`}></span>
+                       <span className="text-[11px] font-bold">Low (8%)</span>
+                   </div>
+                </td>
               </tr>
               <tr style={{ opacity: 0.4 }}>
                 <td style={{ padding: '1rem 0' }}>Delhi NCR</td>
@@ -151,13 +159,19 @@ const AdminDash = ({ onLogout }) => {
 
         {/* Real-time Activity Feed */}
         <div className="main-card glass-panel p-6">
-          <h3>Live Payout Feed</h3>
+          <div className="flex-between mb-2">
+             <h3>Live Payout Feed</h3>
+             <span className="text-[10px] text-primary font-bold">SECURED BY MTS+</span>
+          </div>
           <div className="timeline mt-6">
             {activeTriggers.length > 0 ? activeTriggers.map((t, i) => (
               <div key={i} className="timeline-item">
                 <div className="timeline-icon bg-green"><ShieldCheck size={16} /></div>
                 <div className="timeline-content">
-                  <h4>{t.amount} Distributed</h4>
+                  <div className="flex-between">
+                    <h4>{t.amount} Distributed</h4>
+                    <span className="text-[8px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded-full border border-emerald-500/20">VERIFIED</span>
+                  </div>
                   <p>Trigger: {t.city} • {t.reason}</p>
                   <span className="time-text">{t.time}</span>
                 </div>
@@ -168,15 +182,47 @@ const AdminDash = ({ onLogout }) => {
                 <p>Waiting for parametric triggers...</p>
               </div>
             )}
+          </div>
+        </div>
 
-            <div className="timeline-item">
-              <div className="timeline-icon bg-blue"><Users size={16} /></div>
-              <div className="timeline-content">
-                <h4>New Cohort Added</h4>
-                <p>120 workers joined from Chennai region.</p>
-                <span className="time-text">1 hour ago</span>
+        {/* Loss Ratio Analytics Chart */}
+        <div className="main-card glass-panel p-6 lg:col-span-2">
+          <div className="flex-between mb-6">
+            <div>
+              <h3 className="text-lg font-black uppercase tracking-tighter">System Solvency Analytics</h3>
+              <p className="text-[10px] text-muted font-bold">Premium Revenue vs Payout Expenditure (Daily)</p>
+            </div>
+            <div className="flex gap-4">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                <span className="text-[10px] font-bold">Revenue</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-red-400"></span>
+                <span className="text-[10px] font-bold">Payouts</span>
               </div>
             </div>
+          </div>
+          <div style={{ width: '100%', height: 200 }}>
+             <ResponsiveContainer>
+                <AreaChart data={[
+                  { day: 'Mon', revenue: 4000, payouts: 1200 },
+                  { day: 'Tue', revenue: 3000, payouts: 800 },
+                  { day: 'Wed', revenue: 2000, payouts: 1500 },
+                  { day: 'Thu', revenue: 2780, payouts: 600 },
+                  { day: 'Fri', revenue: 1890, payouts: 2100 },
+                  { day: 'Sat', revenue: 2390, payouts: 800 },
+                  { day: 'Sun', revenue: 3490, payouts: 400 },
+                ]}>
+                   <XAxis dataKey="day" stroke="rgba(255,255,255,0.1)" fontSize={10} axisLine={false} tickLine={false} />
+                   <YAxis stroke="rgba(255,255,255,0.1)" fontSize={10} axisLine={false} tickLine={false} />
+                   <Tooltip 
+                      contentStyle={{ background: 'rgba(15, 23, 42, 0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', fontSize: '10px' }}
+                   />
+                   <Area type="monotone" dataKey="revenue" stroke="#3b82f6" fillOpacity={0.1} fill="#3b82f6" />
+                   <Area type="monotone" dataKey="payouts" stroke="#f87171" fillOpacity={0.1} fill="#f87171" />
+                </AreaChart>
+             </ResponsiveContainer>
           </div>
         </div>
 
