@@ -3,12 +3,21 @@ const policyKnowledge = require('../config/policyKnowledge.json');
 
 class OpenAIService {
     constructor() {
-        this.openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY,
-        });
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) {
+            console.error('[CRITICAL] OPENAI_API_KEY is missing. AI Chat will be disabled.');
+            this.openai = null;
+        } else {
+            this.openai = new OpenAI({
+                apiKey: apiKey,
+            });
+        }
     }
 
     async generateResponse(userMessage, userContext = {}) {
+        if (!this.openai) {
+            return "My AI brain is currently disconnected (Missing API Key). Please contact the administrator.";
+        }
         try {
             console.log(`[OPENAI] Processing: "${userMessage}"`);
 
