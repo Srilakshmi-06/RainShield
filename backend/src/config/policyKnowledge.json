@@ -1,0 +1,29 @@
+{
+  "platform_name": "RainShield",
+  "mission": "Protecting gig workers from income loss due to hazardous weather.",
+  "policies": {
+    "Basic": {
+      "weekly_premium": 49,
+      "payout_limit": 500,
+      "coverage": "Standard rainfall protection."
+    },
+    "Standard": {
+      "weekly_premium": 99,
+      "payout_limit": 1200,
+      "coverage": "Includes heatwave and moderate rain protection."
+    },
+    "Premium": {
+      "weekly_premium": 199,
+      "payout_limit": 2500,
+      "coverage": "Full protection for rain, heat, and high winds with priority payouts."
+    }
+  },
+  "triggers": {
+    "rainfall": "Exceeds 10mm in a 4-hour window.",
+    "heatwave": "Temperature > 42°C for 2 consecutive hours.",
+    "wind": "Sustained speeds > 50km/h."
+  },
+  "claim_process": "Zero-Touch! When a trigger is detected, a 'Claim Now' button appears on the dashboard. No manual forms needed.",
+  "payout_speed": "Instant credit to worker's wallet upon claim submission.",
+  "contact_info": "Support available 24/7 via the help hub."
+}

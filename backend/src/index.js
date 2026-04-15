@@ -38,6 +38,7 @@ app.use('/api/monitor', monitorRoutes);
 app.use('/api/payout', payoutRoutes);
 app.use('/api/policies', policyRoutes);
 app.use('/api/claims', claimRoutes);
+app.use('/api/chat', require('./routes/chatRoutes'));
 
 const axios = require('axios');
 
@@ -49,16 +50,17 @@ io.on('connection', (socket) => {
   socket.on('joinZone', async (city) => {
     console.log(`User joined monitoring for city: ${city}`);
     
+    // Clear existing interval if any to prevent leaks
+    if (socket.weatherInterval) clearInterval(socket.weatherInterval);
+
+    const { getWeatherData } = require('./services/weatherService');
+    const { getMLPrediction, calculateDynamicPremium } = require('./services/mlService');
+    const { WeatherPrediction, User } = require('./models');
+    
     const sendUpdate = async () => {
-        const { getWeatherData } = require('./services/weatherService');
-        const { getMLPrediction, calculateDynamicPremium } = require('./services/mlService');
-        const { WeatherPrediction, Policy, RiskAlert, User } = require('./models');
-        
         try {
             const weather = await getWeatherData(city);
-            
-            // Find user in MongoDB
-            const user = await User.findOne({ city: city }); // Simplify: find any user in that city for demo
+            const user = await User.findOne({ city: city });
             const userId = user ? user._id : null;
 
             const prediction = await getMLPrediction({
@@ -67,17 +69,17 @@ io.on('connection', (socket) => {
                 humidity: weather.humidity,
                 windSpeed: weather.windSpeed
             }, { 
-                workingHours: 8, // Default for background monitor
-                riskScore: 20 
+                workingHours: user?.workingHours || 8,
+                riskScore: user?.riskScore || 20 
             });
 
-            // Calculate Dynamic Premium (returns { final, breakdown, explanation })
-            const dynamicPremium = calculateDynamicPremium(200, weather);
+            // Calculate Dynamic Premium for real-time display
+            const dynamicPremiumBreakdown = calculateDynamicPremium(200, weather, user || {}, prediction);
 
             const weatherData = {
                 timestamp: weather.timestamp,
                 city: weather.city,
-                dynamicPremium: dynamicPremium.final,
+                dynamicPremium: dynamicPremiumBreakdown.final,
                 conditions: {
                     rainfall: `${weather.rainfall} mm/hr`,
                     temp: `${weather.temp}°C`,
@@ -87,67 +89,28 @@ io.on('connection', (socket) => {
                 prediction: prediction ? {
                     predictedEarnings: prediction.predicted_earnings,
                     payoutAmount: prediction.recommended_payout,
-                    riskLevel: prediction.risk_level
+                    riskLevel: prediction.risk_level,
+                    lossPercentage: prediction.loss_percentage
                 } : null
             };
 
-            // Automated Triggers & Alerts (Store in MongoDB)
-            if (weather.rainfall > 10) {
-              const msg = `🚨 Flood risk alert in ${city}! Suggested Claim for delivery loss.`;
-              socket.emit('riskAlert', { id: Date.now(), type: 'Flood', message: msg, suggestClaim: true });
-              if (userId) {
-                const alert = new RiskAlert({ userId, city, riskType: 'Flood', riskLevel: 'High', message: msg, suggestedClaim: true });
-                await alert.save().catch(e => console.error('Alert Save Error:', e.message));
-              }
-            } else if (weather.temp > 40) {
-              const msg = `🚨 Health risk: Extreme heat in ${city}! Stay hydrated.`;
-              socket.emit('riskAlert', { id: Date.now(), type: 'Health', message: msg, suggestClaim: false });
-              if (userId) {
-                const alert = new RiskAlert({ userId, city, riskType: 'Health', riskLevel: 'High', message: msg, suggestedClaim: false });
-                await alert.save().catch(e => console.error('Alert Save Error:', e.message));
-              }
-            }
-
-            if (prediction && userId) {
-                try {
-                    const newPred = new WeatherPrediction({
-                        userId,
-                        rainfall: weather.rainfall,
-                        temperature: weather.temp,
-                        predictedEarnings: prediction.predicted_earnings,
-                        riskLevel: prediction.risk_level,
-                        payoutAmount: prediction.recommended_payout
-                    });
-                    await newPred.save();
-                    
-                    // Update current premium in MongoDB Policy
-                    await Policy.findOneAndUpdate(
-                      { userId: userId, status: 'active' },
-                      { 
-                        currentPremium: dynamicPremium.final,
-                        riskLevel: prediction.risk_level,
-                        riskInsights: {
-                            breakdown: dynamicPremium.breakdown,
-                            explanation: dynamicPremium.explanation,
-                            factors: dynamicPremium.explanation.split(' because of ')[1]?.split(', ') || ['Stable conditions']
-                        }
-                      },
-                      { upsert: false }
-                    );
-                    // Proactive Claim Suggestion Logic
-                    if (dynamicPremium.final > 250 || prediction.loss_percentage > 15) {
-                        const suggestion = await ClaimService.suggestClaim(userId, weatherData, prediction);
-                        if (suggestion) {
-                            socket.emit('claimSuggestion', suggestion);
-                        }
-                    }
-
-                } catch (dbErr) {
-                    console.error('MongoDB Features Error:', dbErr.message);
+            // Intelligent Policy Adjustment & Logging
+            if (user && user.phone) {
+                const adjustedPolicy = await PolicyService.adjustWithRiskInsights(user.phone, weather, prediction);
+                if (adjustedPolicy) {
+                    socket.emit('policyUpdate', adjustedPolicy);
                 }
             }
 
-            // Real-time Risk Alerts based on conditions
+            // Proactive Claim Suggestion Logic
+            if (userId && (dynamicPremiumBreakdown.final > 250 || (prediction && prediction.loss_percentage > 15))) {
+                const suggestion = await ClaimService.suggestClaim(userId, weatherData, prediction);
+                if (suggestion) {
+                    socket.emit('claimSuggestion', suggestion);
+                }
+            }
+
+            // Real-time Risk Alerts based on high-risk conditions
             if (weather.rainfall > 10 || (prediction && prediction.risk_level === 'HIGH')) {
                 const payout = prediction ? prediction.recommended_payout : 0;
                 socket.emit('pushNotification', {
@@ -163,22 +126,29 @@ io.on('connection', (socket) => {
 
             socket.emit('weatherUpdate', weatherData);
 
-            // Intelligent Policy Adjustment (MongoDB)
-            if (user && user.phone) {
-                const adjustedPolicy = await PolicyService.adjustWithRiskInsights(user.phone, weather, prediction);
-                if (adjustedPolicy) {
-                    socket.emit('policyUpdate', adjustedPolicy);
-                }
+            // Optional: Store prediction history
+            if (prediction && userId) {
+                new WeatherPrediction({
+                    userId,
+                    rainfall: weather.rainfall,
+                    temperature: weather.temp,
+                    predictedEarnings: prediction.predicted_earnings,
+                    riskLevel: prediction.risk_level,
+                    payoutAmount: prediction.recommended_payout
+                }).save().catch(e => console.error('Prediction Log Error:', e.message));
             }
+
         } catch (err) {
-            console.error(`[WEATHER/POLICY UPDATE FAILED] ${err.message}`);
+            console.error(`[WEATHER/MONITOR FAILED] ${err.message}`);
         }
     };
 
-    const interval = setInterval(sendUpdate, 10000); // Update every 10s
-    sendUpdate(); // Initial call
+    socket.weatherInterval = setInterval(sendUpdate, 10000);
+    sendUpdate(); // Immediate first call
     
-    socket.on('disconnect', () => clearInterval(interval));
+    socket.on('disconnect', () => {
+        if (socket.weatherInterval) clearInterval(socket.weatherInterval);
+    });
   });
 });
 

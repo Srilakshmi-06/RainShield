@@ -13,6 +13,8 @@ import BACKEND_URL from './config.js';
 
 const socket = io(BACKEND_URL);
 
+import ChatWidget from './components/ChatWidget';
+
 function App() {
   const [notification, setNotification] = useState(null);
   const [user, setUser] = useState(() => {
@@ -122,7 +124,7 @@ function App() {
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <Dashboard user={user} />
+                  <Dashboard user={user} onLogout={handleLogout} />
                 </ProtectedRoute>
               }
             />
@@ -130,7 +132,7 @@ function App() {
               path="/admin"
               element={
                 <ProtectedRoute role="admin">
-                  <AdminDash />
+                  <AdminDash onLogout={handleLogout} />
                 </ProtectedRoute>
               }
             />
@@ -138,6 +140,9 @@ function App() {
           </Routes>
         </AnimatePresence>
       </div>
+      
+      {/* Global Chatbot for logged in users */}
+      {user && <ChatWidget />}
     </BrowserRouter>
   );
 }

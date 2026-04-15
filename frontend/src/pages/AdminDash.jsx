@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, AlertTriangle, CheckSquare, Activity, ShieldCheck } from 'lucide-react';
+import { Users, AlertTriangle, CheckSquare, Activity, ShieldCheck, LogOut } from 'lucide-react';
 import { io } from 'socket.io-client';
 import './Dashboard.css'; // Reusing dashboard styles
 import BACKEND_URL from '../config.js';
 
 const socket = io(BACKEND_URL);
 
-const AdminDash = () => {
+const AdminDash = ({ onLogout }) => {
   const [monitorData, setMonitorData] = useState(null);
   const [activeTriggers, setActiveTriggers] = useState([]);
+
+  const handleLogout = () => {
+    if (onLogout) onLogout();
+    window.location.href = '/';
+  };
 
   useEffect(() => {
     socket.on('weatherUpdate', (update) => {
@@ -36,14 +41,23 @@ const AdminDash = () => {
       className="dashboard-container container"
       style={{ padding: '2rem' }}
     >
-      <header className="dashboard-header mb-6">
+      <header className="dashboard-header mb-6 flex-between">
         <div>
           <h2>RainShield Admin Command Center</h2>
           <p>Real-time platform oversight & risk management</p>
         </div>
-        <div className="status-badge safe" style={{ border: '1px solid #3b82f6', color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)' }}>
-          <Activity size={16} />
-          <span>System Healthy</span>
+        <div className="flex items-center gap-4">
+          <div className="status-badge safe" style={{ border: '1px solid #3b82f6', color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)' }}>
+            <Activity size={16} />
+            <span>System Healthy</span>
+          </div>
+          <button 
+            onClick={handleLogout}
+            className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-red-500/10 text-white hover:text-red-400 border border-white/10 hover:border-red-500/20 rounded-xl transition-all font-black uppercase tracking-widest text-[10px]"
+          >
+            <LogOut size={16} />
+            <span>Sign Out</span>
+          </button>
         </div>
       </header>
 
