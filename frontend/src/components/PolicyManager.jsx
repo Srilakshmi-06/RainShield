@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import BACKEND_URL from '../config.js';
 
-const PolicyManager = ({ user, socket }) => {
+const PolicyManager = ({ user, socket, refreshUser }) => {
   const [policies, setPolicies] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -74,6 +74,8 @@ const PolicyManager = ({ user, socket }) => {
       const result = await response.json();
       if (result.success) {
         setPolicies(prev => prev.map(p => p.id === policyId ? { ...p, ...result.policy } : p));
+        // Sync global user state so chatbot gets the new tier
+        if (refreshUser) refreshUser();
       }
     } catch (err) {
       console.error('Tier Update Error:', err);

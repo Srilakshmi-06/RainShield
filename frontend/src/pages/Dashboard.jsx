@@ -465,7 +465,7 @@ const Dashboard = ({ user, onLogout, refreshUser }) => {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
               >
-                <PolicyManager user={user} socket={socket} />
+                <PolicyManager user={user} socket={socket} refreshUser={refreshUser} />
               </motion.div>
             )}
 
