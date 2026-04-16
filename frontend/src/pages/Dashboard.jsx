@@ -79,7 +79,7 @@ const Dashboard = ({ user, onLogout }) => {
     };
   }, [user]);
 
-  const handleClaim = async (alert) => {
+  const handleClaim = async (riskAlert) => {
     setIsSubmittingClaim(true);
     try {
       const response = await fetch(`${BACKEND_URL}/api/monitor/submit-claim`, {
@@ -88,16 +88,16 @@ const Dashboard = ({ user, onLogout }) => {
         body: JSON.stringify({
           userId: user?._id || user?.id,
           phone: user?.phone,
-          type: alert.type,
-          description: alert.message,
+          type: riskAlert.type,
+          description: riskAlert.message,
           amount: data?.prediction?.payoutAmount || 300,
-          alertId: alert.id
+          alertId: riskAlert.id
         })
       });
       const result = await response.json();
       if (result.success) {
         // If it was auto-approved and paid, show the simulation
-        if (result.claim.payoutStatus === 'Success') {
+        if (result.claim && result.claim.payoutStatus === 'Success') {
            setShowUpiModal({ 
              amount: result.claim.amount, 
              txId: result.claim.payoutId,
@@ -107,7 +107,7 @@ const Dashboard = ({ user, onLogout }) => {
            alert('Claim submitted! Under AI review.');
         }
         fetchClaims();
-        setAlerts(prev => prev.filter(a => a.id !== alert.id));
+        setAlerts(prev => prev.filter(a => a.id !== riskAlert.id));
       }
     } catch (err) {
       console.error('Claim Error:', err);
