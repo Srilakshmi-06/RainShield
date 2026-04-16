@@ -52,7 +52,7 @@ const ClaimService = {
             // 1. ADVANCED FRAUD DETECTION (MTS+)
             const fraudResult = await FraudService.calculateFraudScore(userId, prefilled, req);
             
-            const isAutoApprovable = (prefilled.amount <= 300 && fraudResult.score < 30);
+            const isAutoApprovable = (prefilled.amount <= 1000 && fraudResult.score < 60);
 
             const newClaim = new Claim({
                 userId,
