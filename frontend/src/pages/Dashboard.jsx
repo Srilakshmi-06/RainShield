@@ -16,6 +16,8 @@ import RiskHeatmap from '../components/RiskHeatmap';
 import PolicyManager from '../components/PolicyManager';
 import ClaimsManager from '../components/ClaimsManager';
 import ProfileView from '../components/ProfileView';
+import EarningsLog from '../components/EarningsLog';
+import PayoutHistory from '../components/PayoutHistory';
 import BACKEND_URL from '../config.js';
 
 const socket = io(BACKEND_URL);
@@ -27,7 +29,7 @@ const Dashboard = ({ user, onLogout, refreshUser }) => {
   const [alerts, setAlerts] = useState([]);
   const [claims, setClaims] = useState([]);
   const [isSubmittingClaim, setIsSubmittingClaim] = useState(false);
-  const [activeView, setActiveView] = useState('overview'); // 'overview', 'policy', 'profile'
+  const [activeView, setActiveView] = useState('overview'); // 'overview', 'policy', 'profile', 'earnings', 'payouts'
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [showUpiModal, setShowUpiModal] = useState(null); // { amount, txId, vpa }
 
@@ -180,11 +182,17 @@ const Dashboard = ({ user, onLogout, refreshUser }) => {
 
           <div className="nav-group">
             <p className="nav-label">Reports</p>
-            <button className="nav-item">
+            <button 
+              className={`nav-item ${activeView === 'earnings' ? 'active' : ''}`}
+              onClick={() => setActiveView('earnings')}
+            >
               <Activity size={18} />
               <span>Earnings Log</span>
             </button>
-            <button className="nav-item">
+            <button 
+              className={`nav-item ${activeView === 'payouts' ? 'active' : ''}`}
+              onClick={() => setActiveView('payouts')}
+            >
               <History size={18} />
               <span>Payout History</span>
             </button>
@@ -222,7 +230,7 @@ const Dashboard = ({ user, onLogout, refreshUser }) => {
             {/* Left-Aligned Information Group */}
             <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-6">
               <div className="page-title">
-                <h2 className="text-xl font-black">{activeView === 'overview' ? 'Protection Hub' : activeView === 'policy' ? 'Policy Desk' : 'Profile Management'}</h2>
+                <h2 className="text-xl font-black">{activeView === 'overview' ? 'Protection Hub' : activeView === 'policy' ? 'Policy Desk' : activeView === 'earnings' ? 'Earnings Analytics' : activeView === 'payouts' ? 'Settlement Ledger' : 'Profile Management'}</h2>
               </div>
 
               {/* Weather Data moved to Left Group */}
@@ -415,11 +423,11 @@ const Dashboard = ({ user, onLogout, refreshUser }) => {
                     <div className="timeline">
                       {activity.slice(0, 4).map((item, index) => (
                         <div key={index} className="timeline-item">
-                          <div className={`timeline-icon ${item.risk_level === 'HIGH' ? 'bg-red' : 'bg-blue'}`}>
+                          <div className={`timeline-icon ${item.riskLevel === 'HIGH' ? 'bg-red' : 'bg-blue'}`}>
                             <ShieldAlert size={14} />
                           </div>
                           <div className="timeline-content">
-                            <p className="text-xs font-bold">{item.risk_level} Condition</p>
+                            <p className="text-xs font-bold">{item.riskLevel} Condition</p>
                             <p className="text-[10px] text-muted">{item.rainfall}mm rain at {new Date(item.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                           </div>
                         </div>
@@ -438,7 +446,7 @@ const Dashboard = ({ user, onLogout, refreshUser }) => {
                         <div key={idx} className="claim-item">
                           <div>
                             <p className="text-xs font-bold leading-none">₹{claim.amount}</p>
-                            <p className="text-[9px] text-muted mt-1 uppercase">{claim.claim_type}</p>
+                            <p className="text-[9px] text-muted mt-1 uppercase">{claim.claimType}</p>
                           </div>
                           <span className={`status-pill ${claim.status.toLowerCase()}`}>{claim.status}</span>
                         </div>
@@ -480,6 +488,28 @@ const Dashboard = ({ user, onLogout, refreshUser }) => {
                 exit={{ opacity: 0, x: -20 }}
               >
                 <ProfileView user={user} />
+              </motion.div>
+            )}
+
+            {activeView === 'earnings' && (
+              <motion.div
+                key="earnings"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+              >
+                <EarningsLog user={user} />
+              </motion.div>
+            )}
+
+            {activeView === 'payouts' && (
+              <motion.div
+                key="payouts"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+              >
+                <PayoutHistory user={user} />
               </motion.div>
             )}
           </AnimatePresence>
