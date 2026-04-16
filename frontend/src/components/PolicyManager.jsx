@@ -48,21 +48,6 @@ const PolicyManager = ({ user, socket }) => {
     };
   }, [user.phone, socket]);
 
-  const handlePayPremium = async (policyId) => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/policies/pay-premium/${policyId}`, {
-        method: 'PUT'
-      });
-      const result = await response.json();
-      if (result.success) {
-        alert(result.message);
-        fetchPolicyData();
-      }
-    } catch (err) {
-      console.error('Payment Error:', err);
-    }
-  };
-
   const handleToggleAutoRenew = async (policyId, currentVal) => {
     try {
       const response = await fetch(`${BACKEND_URL}/api/policies/auto-renew/${policyId}`, {
@@ -95,8 +80,8 @@ const PolicyManager = ({ user, socket }) => {
     }
   };
 
-  const activePolicy = policies.find(p => ['active', 'expiring_soon', 'pending_payment'].includes(p.status) || p.statusDisplay === 'Expiring Soon');
-  const pastPolicies = policies.filter(p => ['expired', 'cancelled'].includes(p.status));
+  const activePolicy = policies.find(p => p.status === 'active' || p.status === 'expiring_soon' || p.statusDisplay === 'Expiring Soon');
+  const pastPolicies = policies.filter(p => p.status === 'expired' || p.status === 'cancelled');
 
   if (loading) return <div className="p-8 text-center"><RefreshCw className="animate-spin inline mr-2" /> Loading Insurance Data...</div>;
 
@@ -157,48 +142,32 @@ const PolicyManager = ({ user, socket }) => {
                       </p>
                     </div>
                   </div>
-                  <div className={`status-pill ${activePolicy.status === 'pending_payment' ? 'warning' : (activePolicy.statusDisplay === 'Expiring Soon' ? 'warning' : 'active')}`}>
-                    {activePolicy.status === 'pending_payment' ? 'Payment Pending' : (activePolicy.statusDisplay || activePolicy.status)}
+                  <div className={`status-pill ${activePolicy.statusDisplay === 'Expiring Soon' ? 'warning' : 'active'}`}>
+                    {activePolicy.statusDisplay || activePolicy.status}
                   </div>
                 </div>
 
-                {activePolicy.status === 'pending_payment' ? (
-                  <div className="p-8 text-center bg-primary/5 border-y border-white/5">
-                    <Zap size={32} className="mx-auto mb-4 text-primary animate-pulse" />
-                    <h3 className="text-xl font-black mb-2">Activation Required</h3>
-                    <p className="text-sm text-muted mb-6 max-w-md mx-auto">
-                      Your parametric protection is ready. Pay your first monthly premium of **₹{activePolicy.currentPremium}** to enable instant weather payouts.
-                    </p>
-                    <button 
-                      onClick={() => handlePayPremium(activePolicy.id)}
-                      className="bg-primary hover:bg-emerald-400 text-white px-8 py-3 rounded-xl font-black text-sm transition-all shadow-lg shadow-primary/20"
-                    >
-                      PAY ₹{activePolicy.currentPremium} VIA UPI
-                    </button>
+                <div className="policy-metrics-strip grid grid-cols-3 border-t border-b border-white/5">
+                  <div className="strip-item p-4 text-center">
+                    <p className="text-xs text-muted mb-1">Monthly Premium</p>
+                    <p className="font-bold text-lg">₹{activePolicy.currentPremium}</p>
+                    {parseFloat(activePolicy.currentPremium) > parseFloat(activePolicy.premiumAmount) && (
+                      <span className="risk-indicator up flex items-center justify-center gap-1 text-[10px]">
+                        <TrendingUp size={10} /> Risk adj.
+                      </span>
+                    )}
                   </div>
-                ) : (
-                  <div className="policy-metrics-strip grid grid-cols-3 border-t border-b border-white/5">
-                    <div className="strip-item p-4 text-center">
-                      <p className="text-xs text-muted mb-1">Monthly Premium</p>
-                      <p className="font-bold text-lg">₹{activePolicy.currentPremium}</p>
-                      {parseFloat(activePolicy.currentPremium) > parseFloat(activePolicy.premiumAmount) && (
-                        <span className="risk-indicator up flex items-center justify-center gap-1 text-[10px]">
-                          <TrendingUp size={10} /> Risk adj.
-                        </span>
-                      )}
-                    </div>
-                    <div className="strip-item p-4 text-center border-l border-r border-white/5">
-                      <p className="text-xs text-muted mb-1">Max Payout Limit</p>
-                      <p className="font-bold text-lg">₹{activePolicy.payoutLimit}</p>
-                    </div>
-                    <div className="strip-item p-4 text-center">
-                      <p className="text-xs text-muted mb-1">Days Remaining</p>
-                      <p className="font-bold text-lg">{activePolicy.daysRemaining} days</p>
-                    </div>
+                  <div className="strip-item p-4 text-center border-l border-r border-white/5">
+                    <p className="text-xs text-muted mb-1">Max Payout Limit</p>
+                    <p className="font-bold text-lg">₹{activePolicy.payoutLimit}</p>
                   </div>
-                )}
+                  <div className="strip-item p-4 text-center">
+                    <p className="text-xs text-muted mb-1">Days Remaining</p>
+                    <p className="font-bold text-lg">{activePolicy.daysRemaining} days</p>
+                  </div>
+                </div>
 
-                <div className={`policy-details-body p-6 ${activePolicy.status === 'pending_payment' ? 'opacity-40 grayscale pointer-events-none' : ''}`}>
+                <div className="policy-details-body p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                     {/* Why this premium Section */}
                     {/* Transparent Pricing Breakdown */}
@@ -307,7 +276,7 @@ const PolicyManager = ({ user, socket }) => {
                 <AlertCircle size={48} className="mx-auto mb-4 text-muted opacity-50" />
                 <h3 className="text-xl font-bold mb-2">No Active Policy Found</h3>
                 <p className="text-muted mb-6">Your protection has expired or hasn't been activated yet.</p>
-                <button className="btn btn-primary" onClick={() => setActiveTab('analytics')}>Activate New Policy</button>
+                <button className="btn btn-primary">Activate New Policy</button>
               </div>
             )}
           </motion.div>

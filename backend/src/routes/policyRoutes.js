@@ -49,15 +49,4 @@ router.post('/activate', async (req, res) => {
     }
 });
 
-// 5. Pay Premium
-router.put('/pay-premium/:policyId', async (req, res) => {
-    const { policyId } = req.params;
-    try {
-        const policy = await PolicyService.payPremium(policyId);
-        res.json({ success: true, policy, message: 'Premium Paid! Your protection is now ACTIVE.' });
-    } catch (err) {
-        res.status(500).json({ error: 'Payment failed' });
-    }
-});
-
 module.exports = router;
