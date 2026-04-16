@@ -87,6 +87,11 @@ const PolicyService = {
         updatedAt: Date.now()
       }, { new: true });
       
+      if (updated) {
+        // Synchronize the User document's tier for the dashboard and profile
+        await User.findByIdAndUpdate(updated.userId, { tier: newTier });
+      }
+      
       return updated ? { ...updated.toObject(), id: updated._id } : null;
     } catch (err) {
       console.error('[MongoDB Policy Service] Update Tier Error:', err.message);
