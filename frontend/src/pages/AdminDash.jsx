@@ -13,6 +13,7 @@ const socket = io(BACKEND_URL);
 const AdminDash = ({ onLogout }) => {
   const [stats, setStats] = useState(null);
   const [recentClaims, setRecentClaims] = useState([]);
+  const [forecast, setForecast] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchStats = async () => {
@@ -22,6 +23,7 @@ const AdminDash = ({ onLogout }) => {
       if (data.success) {
         setStats(data.stats);
         setRecentClaims(data.recentActivity);
+        setForecast(data.forecast || []);
       }
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
@@ -67,8 +69,8 @@ const AdminDash = ({ onLogout }) => {
     >
       <header className="dashboard-header mb-6 flex-between">
         <div>
-          <h2>RainShield Admin Command Center</h2>
-          <p>Real-time platform oversight & risk management</p>
+          <h2 className="text-2xl font-black">RainShield Command Center</h2>
+          <p className="text-xs text-muted uppercase tracking-widest font-bold">InsurTech Risk Management Platform</p>
         </div>
         <div className="flex items-center gap-4">
           <div className="status-badge safe" style={{ border: '1px solid #3b82f6', color: '#3b82f6', background: 'rgba(59, 130, 246, 0.1)' }}>
@@ -101,11 +103,11 @@ const AdminDash = ({ onLogout }) => {
             <h2 className="text-2xl font-black">{loading ? '...' : stats?.totalClaims || 0}</h2>
           </div>
         </div>
-        <div className="metric-card glass-panel flex-row">
-          <CheckSquare className="text-emerald-400" size={24} />
+        <div className="metric-card glass-panel flex-row highlight border-emerald-500/30">
+          <ShieldCheck className="text-emerald-400" size={24} />
           <div>
-            <p className="text-xs text-muted uppercase font-bold">Active Policies</p>
-            <h2 className="text-2xl font-black">{loading ? '...' : stats?.activePolicies || 0}</h2>
+            <p className="text-xs text-muted uppercase font-bold">Loss Ratio</p>
+            <h2 className="text-2xl font-black text-emerald-400">{loading ? '...' : (stats?.lossRatio || 0).toFixed(1)}%</h2>
           </div>
         </div>
         <div className="metric-card glass-panel flex-row">
@@ -132,7 +134,7 @@ const AdminDash = ({ onLogout }) => {
                 <th style={{ padding: '0.8rem 0', color: 'var(--text-muted)' }}>City/Area</th>
                 <th style={{ padding: '0.8rem 0', color: 'var(--text-muted)' }}>Condition</th>
                 <th style={{ padding: '0.8rem 0', color: 'var(--text-muted)' }}>Rain</th>
-                <th style={{ padding: '0.8rem 0', color: 'var(--text-muted)' }}>Fraud Prob</th>
+                <th style={{ padding: '0.8rem 0', color: 'var(--text-muted)' }}>MTS+ Probability</th>
               </tr>
             </thead>
             <tbody>
@@ -147,33 +149,34 @@ const AdminDash = ({ onLogout }) => {
                 <td>
                    <div className="flex items-center gap-2">
                        <span className={`w-2 h-2 rounded-full ${monitorData?.conditions?.riskLevel === 'High' ? 'bg-orange-500' : 'bg-emerald-500'}`}></span>
-                       <span className="text-[11px] font-bold">Low (8%)</span>
+                       <span className="text-[11px] font-bold">{monitorData?.conditions?.riskLevel === 'High' ? 'Medium (24%)' : 'Low (8%)'}</span>
                    </div>
                 </td>
-              </tr>
-              <tr style={{ opacity: 0.4 }}>
-                <td style={{ padding: '1rem 0' }}>Delhi NCR</td>
-                <td><span className="status-badge safe">Drizzle</span></td>
-                <td><strong>2.5 mm</strong></td>
-                <td>0</td>
-              </tr>
-              <tr style={{ opacity: 0.4 }}>
-                <td style={{ padding: '1rem 0' }}>Bangalore Central</td>
-                <td><span className="status-badge safe">Sunny</span></td>
-                <td><strong>0 mm</strong></td>
-                <td>0</td>
               </tr>
             </tbody>
           </table>
 
-          <div className="platform-health mt-8" style={{ background: 'rgba(255,255,255,0.02)', padding: '1rem', borderRadius: '12px' }}>
-            <div className="flex-between mb-2">
-              <span className="small" style={{ color: 'var(--text-muted)' }}>Platform Solvent Reserve</span>
-              <span className="small">₹8.5 Cr</span>
-            </div>
-            <div className="payout-bar" style={{ height: '6px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', overflow: 'hidden' }}>
-              <div className="progress" style={{ width: '85%', height: '100%', background: 'var(--primary)' }}></div>
-            </div>
+          {/* Predictive Analytics: Deliverable Requirement */}
+          <div className="mt-8 p-6 glass-panel border border-blue-500/20 bg-blue-500/5">
+             <h4 className="text-xs font-black uppercase tracking-widest text-blue-400 mb-6 flex items-center gap-2">
+               <Activity size={14} /> Next Week's Likely Disruption Forecast
+             </h4>
+             <div className="flex items-end justify-between gap-2 h-24">
+                {forecast.map((f, i) => (
+                    <div key={i} className="flex-1 flex flex-col items-center gap-2">
+                        <div 
+                          className="w-full rounded-t-lg transition-all" 
+                          style={{ 
+                            height: `${(f.claims / 40) * 100}%`, 
+                            background: f.color,
+                            opacity: 0.6
+                          }}
+                        ></div>
+                        <span className="text-[9px] font-black text-white/50">{f.day}</span>
+                    </div>
+                ))}
+             </div>
+             <p className="text-[9px] text-muted mt-4 italic">Al-Driven Predictive Claims Volume Modeling</p>
           </div>
 
           {/* New Simulation Control Panel */}
@@ -184,14 +187,14 @@ const AdminDash = ({ onLogout }) => {
                 id="sim-city"
                 type="text" 
                 placeholder="City (e.g. Mumbai)" 
-                className="input-field text-xs" 
+                className="input-field text-xs bg-black/40 border-white/10" 
                 defaultValue="Mumbai"
               />
               <input 
                 id="sim-rain"
                 type="number" 
                 placeholder="Rain (mm)" 
-                className="input-field text-xs"
+                className="input-field text-xs bg-black/40 border-white/10"
                 defaultValue="15"
               />
             </div>
@@ -232,7 +235,6 @@ const AdminDash = ({ onLogout }) => {
                 Clear
               </button>
             </div>
-            <p className="text-[9px] text-muted mt-2 italic text-center">Bypasses OpenWeather API for real-time parametric testing</p>
           </div>
         </div>
 
