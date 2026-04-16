@@ -43,7 +43,9 @@ const policySchema = new mongoose.Schema({
     premiumAmount: { type: Number, default: 150 },
     currentPremium: { type: Number, default: 150 }, // Dynamic premium scaling
     payoutLimit: { type: Number, default: 5000 },
-    status: { type: String, enum: ['active', 'expiring_soon', 'expired', 'pending_renewal'], default: 'active' },
+    status: { type: String, enum: ['active', 'expiring_soon', 'expired', 'pending_renewal', 'pending_payment'], default: 'pending_payment' },
+    isPremiumPaid: { type: Boolean, default: false },
+    lastPaymentDate: { type: Date },
     autoRenew: { type: Boolean, default: true },
     gracePeriodEnd: { type: Date },
     riskLevel: { type: String, default: 'Low' },

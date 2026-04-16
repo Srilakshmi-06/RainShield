@@ -32,7 +32,8 @@ const PolicyService = {
         premiumAmount: basePremium,
         currentPremium: basePremium,
         payoutLimit,
-        status: 'active',
+        status: 'pending_payment',
+        isPremiumPaid: false,
         autoRenew: true,
         riskLevel: 'Low',
         riskInsights
@@ -42,6 +43,24 @@ const PolicyService = {
       return { ...newPolicy.toObject(), id: newPolicy._id };
     } catch (err) {
       console.error('[MongoDB Policy Service] Create Policy Error:', err.message);
+      return null;
+    }
+  },
+
+  // 1.1 Pay Premium for a policy
+  async payPremium(policyId) {
+    try {
+      const policy = await Policy.findById(policyId);
+      if (!policy) return null;
+
+      policy.status = 'active';
+      policy.isPremiumPaid = true;
+      policy.lastPaymentDate = new Date();
+      await policy.save();
+      
+      return { ...policy.toObject(), id: policy._id };
+    } catch (err) {
+      console.error('Pay Premium Error:', err.message);
       return null;
     }
   },

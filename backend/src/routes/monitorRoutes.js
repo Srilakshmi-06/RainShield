@@ -185,6 +185,22 @@ router.post('/submit-claim', async (req, res) => {
         // Fetch active policy from MongoDB
         const policy = await Policy.findOne({ userId: targetUserId, status: 'active' });
 
+        if (!policy) {
+            const anyPolicy = await Policy.findOne({ userId: targetUserId });
+            if (anyPolicy && anyPolicy.status === 'pending_payment') {
+                return res.status(403).json({ 
+                    success: false, 
+                    error: 'Payment Required', 
+                    message: 'Your insurance is pending payment. Please pay the premium in the Policy Desk to enable parametric triggers.' 
+                });
+            }
+            return res.status(403).json({ 
+                success: false, 
+                error: 'No Active Policy', 
+                message: 'You do not have an active insurance policy. Please enroll to start protection.' 
+            });
+        }
+
         // Use the integrated ClaimService for automated logic (Fraud, Auto-Approval, Payout)
         const claimResult = await ClaimService.submitOneClickClaim({
             userId: targetUserId,
