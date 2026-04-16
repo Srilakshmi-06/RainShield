@@ -3,6 +3,7 @@ const router = express.Router();
 
 const { getMLPrediction } = require('../services/mlService');
 const { WeatherPrediction, Claim, User, Policy } = require('../models');
+const ClaimService = require('../services/claimService');
 
 router.get('/status/:zone', async (req, res) => {
     const { zone } = req.params;
@@ -134,7 +135,7 @@ router.get('/heatmap/:city', async (req, res) => {
             const weather = await getWeatherData(zone.name).catch(() => baseWeather); 
             
             const prediction = await getMLPrediction({
-                rainMm: weather.rainfall,
+                rainfall: weather.rainfall, // Fixed: was rainMm
                 temp: weather.temp,
                 humidity: weather.humidity,
                 windSpeed: weather.windSpeed
@@ -161,38 +162,51 @@ router.get('/heatmap/:city', async (req, res) => {
 router.post('/submit-claim', async (req, res) => {
     const { userId, type, description, amount, alertId } = req.body;
     
+    if (!userId) {
+        return res.status(400).json({ error: 'User ID is required' });
+    }
+
     try {
         // Find user by id or phone
-        let targetUserId = userId;
-        if (!userId.match(/^[0-9a-fA-F]{24}$/)) {
+        let targetUserId = null;
+        const isMongoId = /^[0-9a-fA-F]{24}$/.test(userId);
+        
+        if (isMongoId) {
+            targetUserId = userId;
+        } else {
             const user = await User.findOne({ phone: userId });
             targetUserId = user ? user._id : null;
+        }
+
+        if (!targetUserId) {
+            return res.status(404).json({ error: 'User profile not found. Please log in again.' });
         }
 
         // Fetch active policy from MongoDB
         const policy = await Policy.findOne({ userId: targetUserId, status: 'active' });
 
-        const newClaim = new Claim({
+        // Use the integrated ClaimService for automated logic (Fraud, Auto-Approval, Payout)
+        const claimResult = await ClaimService.submitOneClickClaim({
             userId: targetUserId,
             policyId: policy ? policy._id : null,
-            riskAlertId: alertId, // AlertId can be a dummy or MongoId
-            claimType: type,
-            description,
-            amount,
-            status: 'Pending'
-        });
-
-        await newClaim.save();
+            prefilled: {
+                claimType: type || 'Weather Loss',
+                description: description || 'Automatic claim submission',
+                amount: amount || 0,
+                riskAlertId: (alertId && /^[0-9a-fA-F]{24}$/.test(alertId)) ? alertId : null
+            }
+        }, req);
 
         res.json({
             success: true,
-            claimId: newClaim._id,
-            status: 'Pending',
-            message: 'Claim submitted successfully in MongoDB!'
+            claim: claimResult,
+            message: claimResult.isAutoApproved 
+                ? 'Claim auto-approved and processed!' 
+                : 'Claim submitted and under review.'
         });
     } catch (err) {
         console.error('Claim Submission Error:', err.message);
-        res.status(500).json({ error: 'Failed to submit claim' });
+        res.status(500).json({ error: 'Failed to submit claim: ' + err.message });
     }
 });
 
