@@ -7,31 +7,53 @@ const { WeatherPrediction, Claim, User, Policy } = require('../models');
 router.get('/status/:zone', async (req, res) => {
     const { zone } = req.params;
     const phone = req.query.phone || '999'; // Use phone as identifier for demo
+    const simulatedRain = req.query.rain;
+    const simulatedTemp = req.query.temp;
     
     try {
         const { getWeatherData } = require('../services/weatherService');
         const { getMLPrediction } = require('../services/mlService');
         
-        // Find user by phone in MongoDB
-        const user = await User.findOne({ phone: phone });
-        const userId = user ? user._id : null;
+        // Find user by phone in MongoDB (with safety for connection failure)
+        let userId = null;
+        let userProfile = {};
+        try {
+            const user = await User.findOne({ phone: phone });
+            userId = user ? user._id : null;
+            userProfile = user || {};
+        } catch (dbErr) {
+            console.warn('[MONITOR] DB search failed, continuing in demo mode.');
+        }
 
         // Fetch LIVE data
-        const weather = await getWeatherData(zone);
+        const weather = await getWeatherData(zone).catch(err => {
+            console.warn('[MONITOR] Weather fetch failed, using realistic fallback.');
+            return {
+                city: zone, temp: 28, rainfall: 0, humidity: 65, windSpeed: 5,
+                description: 'Clear (Fallback)', timestamp: new Date().toISOString()
+            };
+        });
+        
+        // Apply simulation overrides if present
+        if (simulatedRain !== undefined) weather.rainfall = parseFloat(simulatedRain);
+        if (simulatedTemp !== undefined) weather.temp = parseFloat(simulatedTemp);
         
         // Call ML Service
         const prediction = await getMLPrediction({
-            rainMm: weather.rainfall,
+            rainfall: weather.rainfall, // Fixed: was rainMm
             temp: weather.temp,
             humidity: weather.humidity,
             windSpeed: weather.windSpeed
+        }, {
+            workingHours: userProfile.workingHours || 8,
+            riskScore: userProfile.riskScore || 20
         });
 
         const riskLevel = prediction ? prediction.risk_level : 'Low';
         const predictedEarnings = prediction ? prediction.predicted_earnings : 800;
         const payoutAmount = prediction ? prediction.recommended_payout : 0;
 
-        // Store in MongoDB
+        // Store in MongoDB (Optional, don't fail if DB is down)
         if (userId) {
             try {
                 const newPrediction = new WeatherPrediction({
@@ -44,7 +66,7 @@ router.get('/status/:zone', async (req, res) => {
                 });
                 await newPrediction.save();
             } catch (err) {
-                console.error('Failed to store prediction in MongoDB:', err.message);
+                // Silently ignore storage errors in demo
             }
         }
 
