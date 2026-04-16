@@ -20,7 +20,7 @@ import BACKEND_URL from '../config.js';
 
 const socket = io(BACKEND_URL);
 
-const Dashboard = ({ user, onLogout }) => {
+const Dashboard = ({ user, onLogout, refreshUser }) => {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activity, setActivity] = useState([]);
@@ -103,6 +103,9 @@ const Dashboard = ({ user, onLogout }) => {
              txId: result.claim.payoutId,
              vpa: (user?.phone || '999') + '@okaxis'
            });
+           
+           // Refresh wallet balance
+           if (refreshUser) refreshUser();
         } else {
            alert('Claim submitted! Under AI review.');
         }

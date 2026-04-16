@@ -33,6 +33,19 @@ function App() {
     localStorage.removeItem('shield_user');
   };
 
+  const refreshUser = async () => {
+    if (!user || !user._id) return;
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/auth/profile/${user._id}`);
+      const result = await response.json();
+      if (result.user) {
+        handleLogin(result.user);
+      }
+    } catch (err) {
+      console.error('Failed to refresh user data:', err);
+    }
+  };
+
   useEffect(() => {
     socket.on('pushNotification', (data) => {
       setNotification(data);
@@ -124,7 +137,7 @@ function App() {
               path="/dashboard"
               element={
                 <ProtectedRoute>
-                  <Dashboard user={user} onLogout={handleLogout} />
+                  <Dashboard user={user} onLogout={handleLogout} refreshUser={refreshUser} />
                 </ProtectedRoute>
               }
             />

@@ -185,4 +185,15 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// 5. Get User Profile (for wallet refresh)
+router.get('/profile/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ error: 'User not found' });
+        res.json({ user: { ...user._doc, password: '' } });
+    } catch (err) {
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 module.exports = router;
