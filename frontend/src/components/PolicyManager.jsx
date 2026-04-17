@@ -7,6 +7,7 @@ import {
   TrendingUp, IndianRupee, PieChart
 } from 'lucide-react';
 import BACKEND_URL from '../config.js';
+import UpiPaymentModal from './UpiPaymentModal';
 
 const PolicyManager = ({ user, socket, refreshUser }) => {
   const [policies, setPolicies] = useState([]);
@@ -15,6 +16,8 @@ const PolicyManager = ({ user, socket, refreshUser }) => {
   const [expandedPolicy, setExpandedPolicy] = useState(null);
   const [showHistory, setShowHistory] = useState(false);
   const [activeTab, setActiveTab] = useState('current'); // 'current', 'history', 'analytics'
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPolicyForPayment, setSelectedPolicyForPayment] = useState(null);
 
   const fetchPolicyData = async () => {
     try {
@@ -83,15 +86,25 @@ const PolicyManager = ({ user, socket, refreshUser }) => {
   };
 
   const handlePayPremium = async (policyId) => {
+    // Open the modal first
+    const policy = policies.find(p => p.id === policyId);
+    setSelectedPolicyForPayment(policy);
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = async () => {
+    if (!selectedPolicyForPayment) return;
+    
     try {
-        const response = await fetch(`${BACKEND_URL}/api/policies/pay-premium/${policyId}`, {
+        const response = await fetch(`${BACKEND_URL}/api/policies/pay-premium/${selectedPolicyForPayment.id}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
         });
         const result = await response.json();
         if (result.success) {
-            setPolicies(prev => prev.map(p => p.id === policyId ? { ...p, ...result.policy } : p));
-            alert('Premium paid successfully! Protection is now active for 7 days.');
+            setPolicies(prev => prev.map(p => p.id === selectedPolicyForPayment.id ? { ...p, ...result.policy } : p));
+            setShowPaymentModal(false);
+            // alert('Premium paid successfully! Protection is now active for 7 days.');
         }
     } catch (err) {
         console.error('Payment Error:', err);
@@ -395,6 +408,14 @@ const PolicyManager = ({ user, socket, refreshUser }) => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <UpiPaymentModal 
+        isOpen={showPaymentModal}
+        amount={selectedPolicyForPayment?.coverageTier === 'premium' ? 199 : (selectedPolicyForPayment?.coverageTier === 'standard' ? 99 : 49)}
+        userPhone={user.phone}
+        onClose={() => setShowPaymentModal(false)}
+        onSuccess={handlePaymentSuccess}
+      />
 
       <style jsx>{`
         .policy-manager-wrapper {
