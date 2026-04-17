@@ -276,9 +276,12 @@ const PolicyManager = ({ user, socket, refreshUser }) => {
                             </p>
                             <button 
                                 onClick={() => handlePayPremium(activePolicy.id)}
-                                className={`w-full py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${ (Date.now() - new Date(activePolicy.lastPremiumPaidDate).getTime()) > 7 * 24 * 60 * 60 * 1000 ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20' : 'bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20'}`}
+                                disabled={(Date.now() - new Date(activePolicy.lastPremiumPaidDate).getTime()) <= 7 * 24 * 60 * 60 * 1000}
+                                className={`w-full py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${ (Date.now() - new Date(activePolicy.lastPremiumPaidDate).getTime()) > 7 * 24 * 60 * 60 * 1000 ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20' : 'bg-emerald-500/50 opacity-50 cursor-not-allowed'}`}
                             >
-                                Pay Weekly (₹{activePolicy.coverageTier === 'premium' ? 199 : (activePolicy.coverageTier === 'standard' ? 99 : 49)})
+                                {(Date.now() - new Date(activePolicy.lastPremiumPaidDate).getTime()) <= 7 * 24 * 60 * 60 * 1000 
+                                  ? 'Paid for this week' 
+                                  : `Pay Weekly (₹${activePolicy.coverageTier === 'premium' ? 199 : (activePolicy.coverageTier === 'standard' ? 99 : 49)})`}
                             </button>
                          </div>
 

@@ -57,9 +57,41 @@ const Dashboard = ({ user, onLogout, refreshUser }) => {
     }
   };
 
+  const checkPolicyStatus = async () => {
+    try {
+      const phone = user?.phone;
+      if (!phone) return;
+      const response = await fetch(`${BACKEND_URL}/api/policies/${phone}`);
+      const result = await response.json();
+      if (result.success && result.policies.length > 0) {
+        const activePolicy = result.policies[0]; // Assuming most recent/active is first
+        const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+        const isOverdue = (Date.now() - new Date(activePolicy.lastPremiumPaidDate).getTime()) > sevenDaysInMs;
+        
+        if (isOverdue) {
+          const reminderAlert = {
+            id: 'premium-reminder',
+            type: 'System',
+            message: 'Your weekly premium is overdue. Pay now to ensure protection is active!',
+            timestamp: new Date()
+          };
+          setAlerts(prev => {
+              if (prev.find(a => a.id === 'premium-reminder')) return prev;
+              return [reminderAlert, ...prev];
+          });
+        } else {
+            setAlerts(prev => prev.filter(a => a.id !== 'premium-reminder'));
+        }
+      }
+    } catch (err) {
+      console.error('Error checking policy status:', err);
+    }
+  };
+
   useEffect(() => {
     fetchActivity();
     fetchClaims();
+    checkPolicyStatus();
 
     if (user?.city) {
       socket.emit('joinZone', user.city);
