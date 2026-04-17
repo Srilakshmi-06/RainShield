@@ -69,11 +69,20 @@ To protect honest workers during network drops:
 
 ##  5. Tech Stack & Development Plan
 ### Tech Stack
--   **Frontend:** React.js + Vite (Fast, Premium Responsive UI).
--   **Backend:** Node.js + Express (Scalable Event Processing).
--   **Database:** MongoDB (Flexible User/History storage).
--   **ML Layer:** Python + Flask (Scikit-learn for risk assessment).
--   **Data:** OpenWeatherMap API for real-time parametric data.
+-   **Frontend:** React.js 19 + Vite (Fast, Premium Responsive UI)
+    -   **Styling:** Modern Vanilla CSS (Glassmorphism, CSS Variables)
+    -   **Animations:** Framer Motion for premium micro-interactions
+    -   **Visualization:** Recharts for risk analytics & Leaflet for geospatial heatmaps
+-   **Backend:** Node.js + Express 5 (Scalable Event Processing)
+    -   **Real-time:** Socket.io for live weather-trigger notifications
+    -   **Security:** JWT & Bcrypt for robust worker authentication
+-   **Intelligence:** 
+    -   **AI Core:** OpenAI GPT-4 & Google Gemini for context-aware assistance
+    -   **ML Service:** Python + Flask (Scikit-learn for risk assessment & fraud detection)
+-   **Database:** MongoDB Atlas (Mongoose for flexible user/history storage)
+-   **Integrations:** 
+    -   **Data:** OpenWeatherMap API for real-time parametric sensors
+    -   **Payments:** Simulated UPI Settlement Models (Razorpay-ready architecture)
 
 ### Execution Plan
 -   **Phase 1:** Core Ideation & Foundation (Complete).
@@ -84,12 +93,43 @@ To protect honest workers during network drops:
 ---
 
 ##  6. Core Platform Features
-The RainShield platform is built around four intelligent pillars designed for the gig economy:
+The RainShield platform is built around several intelligent pillars designed specifically for the gig economy:
 
-1. **Insurance Policy Management**: A robust, multi-tier policy system (Basic, Standard, Premium) that allows users to manage coverage limits, track active protection cycles, and view historical premium audit logs through a premium dashboard.
-2. **Dynamic Premium Calculation**: An AI-integrated pricing engine that adjusts premiums in real-time based on environmental risk (weather API), worker activity logs, and ML-based income-loss predictions.
-3. **Registration Process**: A frictionless, multi-step onboarding system utilizing phone-number authentication and geolocation to automatically sync workers with their local risk zones for accurate parametric triggers.
-4. **Zero-Touch Claims Management**: A proactive claims system that detects risk events automatically. It pre-fills claims for users and offers a one-click submission experience with real-time status tracking (Pending → Approved → Processed).
+### 🛡️ 1. Adversarial Fraud Detection (MTS+)
+The **Multivariate Trust Scoring (MTS+)** engine protects platform integrity by analyzing every claim across three security vectors:
+- **Velocity Check**: Detects "Impossible Travel" anomalies (e.g., claims from distant locations too quickly).
+- **Device Fingerprinting**: Prevents identity syndicates by ensuring unique device-to-user mapping.
+- **Environment Validation**: Cross-references reported GPS coordinates with live satellite weather data at the exact timestamp of the claim.
+
+### 💰 2. Parametric "Zero-Touch" Payouts
+A completely automated settlement engine that eliminates paperwork:
+- **Instant Triggers**: Automated processing once rainfall exceeds **10mm** or temperatures cross **42°C**.
+- **High-Fidelity UPI Simulation**: A visual settlement flow demonstrating instant fund transfers with Transaction ID generation.
+- **Real-time Synchronization**: Worker wallets update instantly via **Socket.io** without page refreshes.
+
+### 🤖 3. AI Multi-lingual assistant
+A 24/7 intelligent assistant (OpenAI GPT-4) that supports workers in their native languages:
+- **Language Support**: Fluency in **English, Hindi, and Tamil** for accessibility.
+- **Context Awareness**: Retrieves real-time policy data and claim status to provide personalized assistance.
+
+### 📊 4. Advanced Admin Command Center
+A data-rich interface for platform operators and insurers:
+- **Loss Ratio Analytics**: Live tracking of Premium Revenue vs. Payout Expenditure to monitor financial solvency.
+- **Risk Injection Panel**: Allows administrators to simulate "Heavy Rain" or "Heatwave" scenarios to validate system triggers during demonstrations.
+- **7-Day Predictive Forecast**: ML-based forecasting of likely claim volumes based on historical weather patterns.
+
+### 👷 5. Worker Financial Resilience Dashboard
+A personalized portal focused on transparency and security:
+- **Protection Chart**: Interactive visualization contrasting "Market Risk" (potential income loss) with "RainShield Cover" (actual payouts).
+- **Tiered Coverage**: Workers can dynamically upgrade through **Basic, Standard, and Premium** tiers to unlock higher payout limits.
+- **Earnings Log**: A complete, transparent ledger of every premium deduction and insurance settlement.
+
+---
+
+##  7. Technical Highlights
+- **ML Integration**: Scikit-Learn models correlating rainfall intensity with time-of-day peak earnings loss.
+- **UI Design**: A premium **Glassmorphic interface** using Vite and Framer Motion for a "High-Tech, High-Trust" feel.
+- **State Management**: Real-time synchronization between the Worker Dashboard and Policy Engine for seamless tier upgrades.
 
 ---
 
