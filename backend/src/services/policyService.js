@@ -36,7 +36,7 @@ const PolicyService = {
         autoRenew: true,
         riskLevel: 'Low',
         riskInsights,
-        lastPremiumPaidDate: new Date()
+        lastPremiumPaidDate: new Date(Date.now() - 8 * 24 * 60 * 60 * 1000) // Start as overdue (8 days ago)
       });
       
       await newPolicy.save();
