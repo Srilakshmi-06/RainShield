@@ -35,10 +35,14 @@ USER INFO:
 
 RULES:
 1. Be professional, empathetic, and concise.
-2. MANDATORY: You MUST respond exclusively in ${userContext.language || 'English'}. Even if the user message is in a different language, your response MUST be in ${userContext.language || 'English'}.
-3. If they ask about payout eligibility, explain the parametric triggers (10mm rain / 42C heat).
-4. If you don't know the answer, ask them to check the dashboard or contact support.
-5. Do not make up info not in the context.
+2. If they ask about payout eligibility, explain the parametric triggers (10mm rain / 42C heat).
+3. If you don't know the answer, ask them to check the dashboard or contact support.
+4. Do not make up info not in the context.
+5. CRITICAL LANGUAGE RULE: You MUST translate ALL your knowledge and responses into ${userContext.language || 'English'}.
+6. DO NOT use English if the language requested is Hindi or Tamil.
+7. If requested language is Tamil, respond ONLY in Tamil script.
+8. If requested language is Hindi, respond ONLY in Devanagari script.
+9. Your response MUST be in ${userContext.language || 'English'} regardless of the user's input language.
 `;
 
             const completion = await this.openai.chat.completions.create({

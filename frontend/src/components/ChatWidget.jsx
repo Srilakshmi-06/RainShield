@@ -126,6 +126,9 @@ const ChatWidget = () => {
         setInputText('');
         setIsLoading(true);
 
+        const selectedLangName = voiceLanguage === 'hi-IN' ? 'Hindi' : (voiceLanguage === 'ta-IN' ? 'Tamil' : 'English');
+        console.log(`[DEBUG] Sending message with language: ${selectedLangName}`);
+
         try {
             const shieldUser = JSON.parse(localStorage.getItem('shield_user') || '{}');
             const response = await axios.post(`${BACKEND_URL}/api/chat/message`, {
@@ -135,7 +138,7 @@ const ChatWidget = () => {
                     name: shieldUser.name,
                     tier: shieldUser.tier,
                     city: shieldUser.city,
-                    language: voiceLanguage === 'hi-IN' ? 'Hindi' : (voiceLanguage === 'ta-IN' ? 'Tamil' : 'English')
+                    language: selectedLangName
                 }
             });
 
