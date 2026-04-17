@@ -85,22 +85,9 @@ const ChatWidget = () => {
         utterance.lang = voiceLanguage;
         
         // Find a suitable voice
-        let voices = window.speechSynthesis.getVoices();
-        
-        // Filtering logic: 
-        // 1. Try to find an EXACT match for language and country (e.g., hi-IN)
-        // 2. Try to find a match for just the language (e.g., hi)
-        let selectedVoice = voices.find(v => v.lang === voiceLanguage);
-        if (!selectedVoice) {
-            selectedVoice = voices.find(v => v.lang.startsWith(voiceLanguage.split('-')[0]));
-        }
-
-        if (selectedVoice) {
-            utterance.voice = selectedVoice;
-            console.log(`[TTS] Selected Voice: ${selectedVoice.name} (${selectedVoice.lang})`);
-        } else {
-            console.warn(`[TTS] No perfect voice found for ${voiceLanguage}, using browser default.`);
-        }
+        const voices = window.speechSynthesis.getVoices();
+        const preferredVoice = voices.find(v => v.lang.includes(voiceLanguage.split('-')[0]));
+        if (preferredVoice) utterance.voice = preferredVoice;
 
         utterance.onstart = () => setIsSpeaking(true);
         utterance.onend = () => setIsSpeaking(false);
@@ -126,9 +113,6 @@ const ChatWidget = () => {
         setInputText('');
         setIsLoading(true);
 
-        const selectedLangName = voiceLanguage === 'hi-IN' ? 'Hindi' : (voiceLanguage === 'ta-IN' ? 'Tamil' : 'English');
-        console.log(`[DEBUG] Sending message with language: ${selectedLangName}`);
-
         try {
             const shieldUser = JSON.parse(localStorage.getItem('shield_user') || '{}');
             const response = await axios.post(`${BACKEND_URL}/api/chat/message`, {
@@ -137,8 +121,7 @@ const ChatWidget = () => {
                 userContext: {
                     name: shieldUser.name,
                     tier: shieldUser.tier,
-                    city: shieldUser.city,
-                    language: selectedLangName
+                    city: shieldUser.city
                 }
             });
 
