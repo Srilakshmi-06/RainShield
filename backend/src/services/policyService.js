@@ -10,7 +10,7 @@ const PolicyService = {
       const user = await User.findOne({ phone });
       if (!user) return null;
       
-      const basePremium = tier === 'premium' ? 500 : (tier === 'standard' ? 300 : 150);
+      const basePremium = tier === 'premium' ? 199 : (tier === 'standard' ? 99 : 49);
       const payoutLimit = tier === 'premium' ? 10000 : (tier === 'standard' ? 5000 : 2000);
       
       const startDate = new Date();
@@ -35,7 +35,8 @@ const PolicyService = {
         status: 'active',
         autoRenew: true,
         riskLevel: 'Low',
-        riskInsights
+        riskInsights,
+        lastPremiumPaidDate: new Date()
       });
       
       await newPolicy.save();
@@ -76,7 +77,7 @@ const PolicyService = {
   // 3. Upgrade or Downgrade Policy Tier
   async updateTier(policyId, newTier) {
     try {
-      const basePremium = newTier === 'premium' ? 500 : (newTier === 'standard' ? 300 : 150);
+      const basePremium = newTier === 'premium' ? 199 : (newTier === 'standard' ? 99 : 49);
       const payoutLimit = newTier === 'premium' ? 10000 : (newTier === 'standard' ? 5000 : 2000);
       
       const updated = await Policy.findByIdAndUpdate(policyId, {
@@ -156,7 +157,25 @@ const PolicyService = {
     }
   },
 
-  // 6. Analytics: Total premiums/claims for user dashboard
+  // 6. Pay Weekly Premium
+  async payWeeklyPremium(policyId) {
+    try {
+        const policy = await Policy.findById(policyId);
+        if (!policy) return null;
+
+        policy.lastPremiumPaidDate = new Date();
+        policy.status = 'active';
+        policy.updatedAt = Date.now();
+        await policy.save();
+
+        return { ...policy.toObject(), id: policy._id };
+    } catch (err) {
+        console.error('[MongoDB Policy Service] Premium Payment Error:', err.message);
+        return null;
+    }
+  },
+
+  // 7. Analytics: Total premiums/claims for user dashboard
   async getUserAnalytics(phone) {
     try {
       const user = await User.findOne({ phone });

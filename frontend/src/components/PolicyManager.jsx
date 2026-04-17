@@ -82,6 +82,22 @@ const PolicyManager = ({ user, socket, refreshUser }) => {
     }
   };
 
+  const handlePayPremium = async (policyId) => {
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/policies/pay-premium/${policyId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await response.json();
+        if (result.success) {
+            setPolicies(prev => prev.map(p => p.id === policyId ? { ...p, ...result.policy } : p));
+            alert('Premium paid successfully! Protection is now active for 7 days.');
+        }
+    } catch (err) {
+        console.error('Payment Error:', err);
+    }
+  };
+
   const activePolicy = policies.find(p => p.status === 'active' || p.status === 'expiring_soon' || p.statusDisplay === 'Expiring Soon');
   const pastPolicies = policies.filter(p => p.status === 'expired' || p.status === 'cancelled');
 
@@ -151,9 +167,9 @@ const PolicyManager = ({ user, socket, refreshUser }) => {
 
                 <div className="policy-metrics-strip grid grid-cols-3 border-t border-b border-white/5">
                   <div className="strip-item p-4 text-center">
-                    <p className="text-xs text-muted mb-1">Monthly Premium</p>
-                    <p className="font-bold text-lg">₹{activePolicy.currentPremium}</p>
-                    {parseFloat(activePolicy.currentPremium) > parseFloat(activePolicy.premiumAmount) && (
+                    <p className="text-xs text-muted mb-1">Weekly Premium</p>
+                    <p className="font-bold text-lg">₹{activePolicy.coverageTier === 'premium' ? 199 : (activePolicy.coverageTier === 'standard' ? 99 : 49)}</p>
+                    {parseFloat(activePolicy.currentPremium) > (activePolicy.coverageTier === 'premium' ? 199 : (activePolicy.coverageTier === 'standard' ? 99 : 49)) && (
                       <span className="risk-indicator up flex items-center justify-center gap-1 text-[10px]">
                         <TrendingUp size={10} /> Risk adj.
                       </span>
@@ -164,8 +180,12 @@ const PolicyManager = ({ user, socket, refreshUser }) => {
                     <p className="font-bold text-lg">₹{activePolicy.payoutLimit}</p>
                   </div>
                   <div className="strip-item p-4 text-center">
-                    <p className="text-xs text-muted mb-1">Days Remaining</p>
-                    <p className="font-bold text-lg">{activePolicy.daysRemaining} days</p>
+                    <p className="text-xs text-muted mb-1">Premium Status</p>
+                    <p className="font-bold text-sm">
+                        {(Date.now() - new Date(activePolicy.lastPremiumPaidDate).getTime()) > 7 * 24 * 60 * 60 * 1000 
+                          ? 'Overdue' 
+                          : 'Paid (Active)'}
+                    </p>
                   </div>
                 </div>
 
@@ -216,20 +236,38 @@ const PolicyManager = ({ user, socket, refreshUser }) => {
                         Policy Settings
                       </h4>
                       <div className="flex flex-col gap-4">
-                        <div className="flex-between glass-panel bg-white/5 p-3 rounded-xl border-none">
-                          <div className="flex items-center gap-2">
-                            <RefreshCw size={16} className={activePolicy.autoRenew ? 'text-primary' : 'text-muted'} />
-                            <span className="text-sm">Auto-Renewal</span>
-                          </div>
-                          <label className="switch">
-                            <input 
-                              type="checkbox" 
-                              checked={activePolicy.autoRenew} 
-                              onChange={() => handleToggleAutoRenew(activePolicy.id, activePolicy.autoRenew)}
-                            />
-                            <span className="slider round"></span>
-                          </label>
-                        </div>
+                         <div className="flex-between glass-panel bg-white/5 p-3 rounded-xl border-none">
+                           <div className="flex items-center gap-2">
+                             <RefreshCw size={16} className={activePolicy.autoRenew ? 'text-primary' : 'text-muted'} />
+                             <span className="text-sm">Auto-Renewal</span>
+                           </div>
+                           <label className="switch">
+                             <input 
+                               type="checkbox" 
+                               checked={activePolicy.autoRenew} 
+                               onChange={() => handleToggleAutoRenew(activePolicy.id, activePolicy.autoRenew)}
+                             />
+                             <span className="slider round"></span>
+                           </label>
+                         </div>
+
+                         <div className={`payment-action-box glass-panel p-4 rounded-xl border ${ (Date.now() - new Date(activePolicy.lastPremiumPaidDate).getTime()) > 7 * 24 * 60 * 60 * 1000 ? 'bg-red-500/10 border-red-500/30' : 'bg-emerald-500/10 border-emerald-500/30'}`}>
+                            <div className="flex-between mb-2">
+                                <span className="text-xs font-bold uppercase tracking-wider">Weekly Premium Cycle</span>
+                                <span className="text-[10px] opacity-60">Every 7 Days</span>
+                            </div>
+                            <p className="text-xs opacity-80 mb-4">
+                                {(Date.now() - new Date(activePolicy.lastPremiumPaidDate).getTime()) > 7 * 24 * 60 * 60 * 1000 
+                                  ? 'Your premium is overdue. Automated payouts are disabled until payment is made.'
+                                  : `Protection is active. Next payment due in ${Math.max(0, 7 - Math.floor((Date.now() - new Date(activePolicy.lastPremiumPaidDate).getTime()) / (24 * 60 * 60 * 1000)))} days.`}
+                            </p>
+                            <button 
+                                onClick={() => handlePayPremium(activePolicy.id)}
+                                className={`w-full py-2.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${ (Date.now() - new Date(activePolicy.lastPremiumPaidDate).getTime()) > 7 * 24 * 60 * 60 * 1000 ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/20' : 'bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20'}`}
+                            >
+                                Pay Weekly (₹{activePolicy.coverageTier === 'premium' ? 199 : (activePolicy.coverageTier === 'standard' ? 99 : 49)})
+                            </button>
+                         </div>
 
                         <div className="tier-upgrade-box glass-panel bg-primary/10 border-primary/20 p-4 rounded-xl">
                           <div className="flex-between mb-3">

@@ -49,4 +49,16 @@ router.post('/activate', async (req, res) => {
     }
 });
 
+// 5. Pay Weekly Premium
+router.post('/pay-premium/:policyId', async (req, res) => {
+    const { policyId } = req.params;
+    try {
+        const policy = await PolicyService.payWeeklyPremium(policyId);
+        if (!policy) return res.status(404).json({ error: 'Policy not found' });
+        res.json({ success: true, policy, message: 'Weekly premium paid! Protection is active.' });
+    } catch (err) {
+        res.status(500).json({ error: 'Payment failed: ' + err.message });
+    }
+});
+
 module.exports = router;

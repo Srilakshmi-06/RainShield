@@ -58,6 +58,7 @@ const policySchema = new mongoose.Schema({
         payoutScenarios: mongoose.Schema.Types.Mixed
     },
     lastPayoutDate: { type: Date },
+    lastPremiumPaidDate: { type: Date, default: Date.now },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });

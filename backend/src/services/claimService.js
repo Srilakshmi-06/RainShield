@@ -19,6 +19,15 @@ const ClaimService = {
             });
             if (existing) return null;
 
+            // CHECK WEEKLY PREMIUM STATUS
+            const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+            const isPremiumPastDue = (Date.now() - new Date(policy.lastPremiumPaidDate).getTime()) > sevenDaysInMs;
+            
+            if (isPremiumPastDue) {
+                console.log(`[Claim Service] Suggestion blocked for ${userId} - Premium Overdue.`);
+                return null;
+            }
+
             const suggestedAmount = prediction ? prediction.recommended_payout : 150;
             
             return {
@@ -48,6 +57,17 @@ const ClaimService = {
     async submitOneClickClaim(claimData, req) {
         try {
             const { userId, policyId, prefilled } = claimData;
+
+            const policy = await Policy.findById(policyId);
+            if (!policy) throw new Error("Active policy not found.");
+
+            // CHECK WEEKLY PREMIUM STATUS
+            const sevenDaysInMs = 7 * 24 * 60 * 60 * 1000;
+            const isPremiumPastDue = (Date.now() - new Date(policy.lastPremiumPaidDate).getTime()) > sevenDaysInMs;
+            
+            if (isPremiumPastDue) {
+                throw new Error("Payout blocked: Weekly premium is overdue. Please pay to re-activate protection.");
+            }
 
             // 1. ADVANCED FRAUD DETECTION (MTS+)
             const fraudResult = await FraudService.calculateFraudScore(userId, prefilled, req);
