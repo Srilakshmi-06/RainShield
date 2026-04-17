@@ -17,8 +17,11 @@ router.get('/stats', async (req, res) => {
         const totalPayoutAmount = payouts.reduce((sum, p) => sum + p.amount, 0);
 
         // LOSS RATIO: Deliverable Requirement
-        const estimatedRevenue = activePolicies * 500; // Mock premium pool
-        const lossRatio = estimatedRevenue > 0 ? (totalPayoutAmount / estimatedRevenue) * 100 : 0;
+        const allPolicies = await Policy.find({ status: 'active' });
+        const actualRevenue = allPolicies.reduce((sum, p) => sum + (p.premiumAmount || 0), 0);
+        
+        // Use actual revenue if available, otherwise fallback to safe calculation
+        const lossRatio = actualRevenue > 0 ? (totalPayoutAmount / actualRevenue) * 100 : 0;
 
         // PREDICTIVE ANALYTICS: Next week's likely disruption
         const forecast = [
