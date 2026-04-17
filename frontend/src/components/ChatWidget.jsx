@@ -121,7 +121,8 @@ const ChatWidget = () => {
                 userContext: {
                     name: shieldUser.name,
                     tier: shieldUser.tier,
-                    city: shieldUser.city
+                    city: shieldUser.city,
+                    language: voiceLanguage
                 }
             });
 
