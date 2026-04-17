@@ -85,9 +85,22 @@ const ChatWidget = () => {
         utterance.lang = voiceLanguage;
         
         // Find a suitable voice
-        const voices = window.speechSynthesis.getVoices();
-        const preferredVoice = voices.find(v => v.lang.includes(voiceLanguage.split('-')[0]));
-        if (preferredVoice) utterance.voice = preferredVoice;
+        let voices = window.speechSynthesis.getVoices();
+        
+        // Filtering logic: 
+        // 1. Try to find an EXACT match for language and country (e.g., hi-IN)
+        // 2. Try to find a match for just the language (e.g., hi)
+        let selectedVoice = voices.find(v => v.lang === voiceLanguage);
+        if (!selectedVoice) {
+            selectedVoice = voices.find(v => v.lang.startsWith(voiceLanguage.split('-')[0]));
+        }
+
+        if (selectedVoice) {
+            utterance.voice = selectedVoice;
+            console.log(`[TTS] Selected Voice: ${selectedVoice.name} (${selectedVoice.lang})`);
+        } else {
+            console.warn(`[TTS] No perfect voice found for ${voiceLanguage}, using browser default.`);
+        }
 
         utterance.onstart = () => setIsSpeaking(true);
         utterance.onend = () => setIsSpeaking(false);
